@@ -107,7 +107,7 @@ saltmaster_bootstrap() {
     pkill -9 salt-minion
     SCRIPTS=$(dirname $0)
     test -e ${SCRIPTS}/salt-master-setup.sh || \
-        curl -sL "https://raw.githubusercontent.com/salt-formulas/salt-formulas/master/deploy/scripts/salt-master-setup.sh" |$SUDO tee ${SCRIPTS}/salt-master-setup.sh > /dev/null;
+        curl -sL "https://raw.githubusercontent.com/salt-formulas/salt-formulas-scripts/master/salt-master-setup.sh" |$SUDO tee ${SCRIPTS}/salt-master-setup.sh > /dev/null;
         $SUDO chmod +x *.sh;
     test -e ${SCRIPTS}/.salt-master-setup.sh.passed || {
         export SALT_MASTER=localhost
