@@ -8,6 +8,11 @@
 # - use PPA repository as formula source
 # - support for spm/yum
 
+# Source specific env vars.
+for path in /srv/salt . /srv/salt/reclass/classes/cluster /srv/salt/reclass/classes/cluster/${CLUSTER_NAME}; do
+  export $(find $path -maxdepth 1 -name '*.env' 2> /dev/null | xargs --no-run-if-empty cat ) > /dev/null
+done;
+
 # DEAULTS
 # salt apt repository
 test -e /etc/lsb-release && eval $(cat /etc/lsb-release)
@@ -141,23 +146,15 @@ EOF
   if [ ! -d /srv/salt/reclass ]; then
     # No reclass at all, clone from given address
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
-    if echo ${RECLASS_BRANCH:-master} | egrep -q "^refs"; then
-        git clone ${RECLASS_ADDRESS} /srv/salt/reclass
-        cd /srv/salt/reclass
-        git fetch ${RECLASS_ADDRESS} ${RECLASS_BRANCH:-master} && git checkout FETCH_HEAD
-        cd -
-    else
-        git clone -b ${RECLASS_BRANCH:-master} ${RECLASS_ADDRESS} /srv/salt/reclass
-    fi
+    if echo ${RECLASS_BRANCH:-master} | egrep -q "^refs"; then		
+        git clone ${RECLASS_ADDRESS} /srv/salt/reclass		
+        cd /srv/salt/reclass		
+        git fetch ${RECLASS_ADDRESS} ${RECLASS_BRANCH:-master} && git checkout FETCH_HEAD		
+        cd -		
+    else		
+        git clone -b ${RECLASS_BRANCH:-master} ${RECLASS_ADDRESS} /srv/salt/reclass;		
+    fi;
   fi;
-
-  # Source bootstrap_vars for specific cluster if specified.
-  for cluster in /srv/salt/reclass/classes/cluster/*/; do
-      if [[ -f "$cluster/bootstrap_vars" ]]; then
-          echo "Sourcing bootstrap_vars for cluster $cluster"
-          source $cluster/bootstrap_vars
-      fi
-  done
 
   cd /srv/salt/reclass
   if [ ! -d /srv/salt/reclass/classes/system/linux ]; then

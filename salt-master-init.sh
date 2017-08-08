@@ -20,9 +20,9 @@ options() {
 
     # try to source local environment & configuration
     # shopt -u dotglob
-    find / -maxdepth 1 -name '*.env' | xargs -0 -n1 --no-run-if-empty
-    find . -maxdepth 1 -name '*.env' | xargs -0 -n1 --no-run-if-empty
-    find /tmp/kitchen -maxdepth 1 -name '*.env' 2> /dev/null | xargs -0 -n1 --no-run-if-empty
+    for path in / . /srv/salt /tmp/kitchen /srv/salt/reclass/classes/cluster /srv/salt/reclass/classes/cluster/${CLUSTER_NAME}; do
+      export $(find $path -maxdepth 1 -name '*.env' 2> /dev/null | xargs --no-run-if-empty cat ) > /dev/null
+    done;
 
     export MAGENTA='\033[0;95m'
     export YELLOW='\033[1;33m'
