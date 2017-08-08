@@ -72,11 +72,7 @@ Bootstrap the Salt Master node
 
 .. code-block:: bash
 
-  apt-get update
-  apt-get install git curl subversion
-
-  svn export --force https://github.com/salt-formulas/salt-formulas/trunk/deploy/scripts \
-  /srv/salt/scripts
+  git clone https://github.com/salt-formulas/salt-formulas-scripts /srv/salt/scripts
 
   git clone <model-repository> /srv/salt/reclass
   git submodule update --init --recursive
