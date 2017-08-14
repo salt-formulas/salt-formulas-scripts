@@ -161,6 +161,11 @@ EOF
     # Possibly subrepo checkout needed
     git submodule update --init --recursive
   fi
+  
+  # Source specific env vars. - temp. change to workaround bootstrap.
+  for path in /srv/salt/reclass/classes/cluster /srv/salt/reclass/classes/cluster/${CLUSTER_NAME}; do
+    export $(find $path -maxdepth 1 -name '*.env' 2> /dev/null | xargs --no-run-if-empty cat ) > /dev/null
+  done;
 
   #sed -ie "s#\(reclass_data_revision.\).*#\1 $RECLASS_BRANCH#" $(find nodes -name ${MASTER_HOSTNAME}.yml|tail -n1)
 
