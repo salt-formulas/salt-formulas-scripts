@@ -16,8 +16,11 @@
 export RECLASS_ROOT=${RECLASS_ROOT:-/srv/salt/reclass}
 function source_local_envs() {
   for path in /tmp/kitchen /srv/salt . ${RECLASS_ROOT}/classes/cluster ${RECLASS_ROOT}/classes/cluster/${CLUSTER_NAME}; do
-    export $(find $path -maxdepth 1 -name '*.env' 2> /dev/null | xargs --no-run-if-empty cat ) > /dev/null
-  done;
+    for f in $(find $path -maxdepth 1 -name '*.env' 2> /dev/null); do
+        echo "Sourcing env variables from $f"
+        source $f
+    done
+  done
 }
 source_local_envs
 
