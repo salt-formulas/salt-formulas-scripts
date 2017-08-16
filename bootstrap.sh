@@ -238,6 +238,7 @@ configure_salt_master()
 	reclass: &reclass
 	  storage_type: yaml_fs
 	  inventory_base_uri: ${RECLASS_ROOT}
+	  ignore_class_notfound: ${RECLASS_IGNORE_CLASS_NOTFOUND:-False}
 	ext_pillar:
 	  - reclass: *reclass
 	master_tops:
@@ -252,6 +253,7 @@ EOF
 	pretty_print: True
 	output: yaml
 	inventory_base_uri: ${RECLASS_ROOT}
+	ignore_class_notfound: ${RECLASS_IGNORE_CLASS_NOTFOUND:-False}
 EOF
 
   clone_reclass
