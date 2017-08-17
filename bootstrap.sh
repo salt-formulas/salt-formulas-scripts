@@ -269,9 +269,9 @@ EOF
 
   #sed -ie "s#\(reclass_data_revision.\).*#\1 $RECLASS_BRANCH#" $(find nodes -name ${MASTER_HOSTNAME}.yml|tail -n1)
 
-  mkdir -vp ${RECLASS_ROOT}/nodes
+  mkdir -vp ${RECLASS_ROOT}/nodes/_generated
   CONFIG=$(find ${RECLASS_ROOT}/nodes -name ${MINION_ID}.yml| grep yml | tail -n1)
-  CONFIG=${CONFIG:-${RECLASS_ROOT}/nodes/${MINION_ID}.yml}
+  CONFIG=${CONFIG:-${RECLASS_ROOT}/nodes/_generated/${MINION_ID}.yml}
   if [[ $SALT_MASTER_BOOTSTRAP_MINIMIZED =~ ^(True|true|1|yes)$ || ! -f "${CONFIG}" ]]; then
   cat <<-EOF > ${CONFIG}
 	classes:
