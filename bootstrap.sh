@@ -15,7 +15,7 @@
 # shopt -u dotglob
 export RECLASS_ROOT=${RECLASS_ROOT:-/srv/salt/reclass}
 function source_local_envs() {
-  for path in /tmp/kitchen /srv/salt . ${RECLASS_ROOT}/classes/cluster ${RECLASS_ROOT}/classes/cluster/${CLUSTER_NAME}; do
+  for path in / /tmp/kitchen /srv/salt . ${RECLASS_ROOT}/classes/cluster ${RECLASS_ROOT}/classes/cluster/${CLUSTER_NAME}; do
     for f in $(find $path -maxdepth 1 -name '*.env' 2> /dev/null); do
         echo "Sourcing env variables from $f"
         source $f
