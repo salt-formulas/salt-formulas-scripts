@@ -274,25 +274,27 @@ EOF
   if [[ $SALT_MASTER_BOOTSTRAP_MINIMIZED =~ ^(True|true|1|yes)$ || ! -f "${CONFIG}" ]]; then
   cat <<-EOF > ${CONFIG}
 	classes:
-	- service.git.client
-	- system.linux.system.single
-	- system.salt.master.single
-	- system.salt.master.$FORMULAS_SOURCE
-	- system.reclass.storage.salt
+	- cluster.${CLUSTER_NAME}.infra.config
 	parameters:
 	  _param:
-	    reclass_data_repository: "$RECLASS_ADDRESS"
-	    reclass_data_revision: ${RECLASS_BRANCH:-master}
-	    salt_formula_branch: ${SALT_FORMULAS_BRANCH:-master}
-	    reclass_config_master: $SALT_MASTER
 	    single_address: $SALT_MASTER
 	    salt_master_host: $SALT_MASTER
 	    salt_master_base_environment: $SALT_ENV
-	    linux_system_codename: $DISTRIB_CODENAME
+	    salt_formula_branch: ${SALT_FORMULAS_BRANCH:-master}
+	    reclass_data_revision: ${RECLASS_BRANCH:-master}
+	    reclass_data_repository: "$RECLASS_ADDRESS"
+	    reclass_config_master: $SALT_MASTER
+	    linux_system_codename: ${DISTRIB_CODENAME}
+	    cluster_name: ${CLUSTER_NAME}
+	    cluster_domain: ${DOMAIN:-$CLUSTER_NAME.local}
 	  linux:
 	    system:
-	      name: $MINION_ID
-	      domain: $DOMAIN
+	      name: ${HOSTNAME:-cfg01}
+	      domain: ${DOMAIN:-$CLUSTER_NAME.local}
+	  #reclass:
+	  #  storage:
+	  #    data_source:
+	  #      engine: local
 	# ########
 EOF
 
