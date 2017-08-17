@@ -75,6 +75,7 @@ export DOMAIN=${DOMAIN:-bootstrap.local}
 # salt
 export SALT_MASTER=${SALT_MASTER:-127.0.0.1} # ip or fqdn
 export MINION_ID=${MINION_ID:-${HOSTNAME}.${DOMAIN}}
+export MASTER_HOSTNAME=${MASTER_HOSTNAME:-${HOSTNAME}.${DOMAIN}}
 
 # saltstack
 BOOTSTRAP_SALTSTACK=${BOOTSTRAP_SALTSTACK:-True}
