@@ -224,6 +224,10 @@ configure_salt_master()
 
   echo "Configuring salt-master ..."
 
+  if [[ $RECLASS_IGNORE_CLASS_NOTFOUND =~ ^(True|true|1|yes)$ ]]; then
+    IGNORE_CLASS_NOTFOUND="ignore_class_notfound: True"
+  fi
+
   [ ! -d /etc/salt/master.d ] && mkdir -p /etc/salt/master.d
   cat <<-EOF > /etc/salt/master.d/master.conf
 	file_roots:
@@ -238,7 +242,7 @@ configure_salt_master()
 	reclass: &reclass
 	  storage_type: yaml_fs
 	  inventory_base_uri: ${RECLASS_ROOT}
-	  ignore_class_notfound: ${RECLASS_IGNORE_CLASS_NOTFOUND:-False}
+	  ${IGNORE_CLASS_NOTFOUND}
 	ext_pillar:
 	  - reclass: *reclass
 	master_tops:
@@ -253,7 +257,7 @@ EOF
 	pretty_print: True
 	output: yaml
 	inventory_base_uri: ${RECLASS_ROOT}
-	ignore_class_notfound: ${RECLASS_IGNORE_CLASS_NOTFOUND:-False}
+	${IGNORE_CLASS_NOTFOUND}
 EOF
 
   clone_reclass
