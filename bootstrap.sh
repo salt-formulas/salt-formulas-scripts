@@ -194,6 +194,24 @@ function clone_reclass() {
 ##########################################
 # Main calls
 
+system_config_ssh_conf() {
+    for conf in ~/.ssh/config /root/.ssh/config; do
+      $SUDO mkdir -p $(dirname $conf)
+      if ! grep StrictHostKeyChecking $conf; then
+        # this should be used only in CI environment
+        echo -e "Host *\n\tStrictHostKeyChecking no\n" | $SUDO tee $conf >/dev/null
+      fi
+    done
+    if ! grep github.com ~/.ssh/known_hosts; then
+      ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
+    fi
+}
+
+system_config_salt_modules_prereq() {
+    # salt-formulas custom modules dependencies, etc:
+    $SUDO $PKGTOOL install -y iproute2 curl sudo apt-transport-https python-psutil python-apt python-m2crypto python-oauth python-pip &>/dev/null
+}
+
 system_config_minion() {
     log_info "System configuration salt minion"
 }
@@ -201,15 +219,15 @@ system_config_minion() {
 system_config_master() {
     log_info "System configuration salt master"
 
-    # salt-formulas custom modules dependencies, etc:
-    $SUDO $PKGTOOL install -y iproute2 curl sudo apt-transport-https python-psutil python-apt python-m2crypto python-oauth python-pip &>/dev/null
+    system_config_salt_modules_prereq
+    system_config_ssh_conf
 
     $SUDO mkdir -p $RECLASS_ROOT/classes/service
-    $SUDO mkdir -p /root/.ssh
-    ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
-    echo -e "Host *\n\tStrictHostKeyChecking no\n" | $SUDO tee ~/.ssh/config >/dev/null
-    echo -e "Host *\n\tStrictHostKeyChecking no\n" | $SUDO tee /root/.ssh/config >/dev/null
-    echo "127.0.1.2  salt" | $SUDO tee -a /etc/hosts >/dev/null
+    $SUDO mkdir -p $RECLASS_ROOT/nodes/_generated
+
+    if ! grep '127.0.1.2.*salt' /etc/hosts; then
+      echo "127.0.1.2  salt" | $SUDO tee -a /etc/hosts >/dev/null
+    fi
 
     which reclass || $SUDO $PKGTOOL install -y reclass
 
@@ -571,13 +589,19 @@ saltmaster_init() {
     #   log_warn "Node verification before initialization failed."; cat /tmp/${MASTER_HOSTNAME}.pillar;
     #fi
 
+
+    # workarond isolated and not fully bootstraped environments
+    PILLAR='{"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": "'${RECLASS_IGNORE_CLASS_NOTFOUND:-False}'"}}}},
+             "reclass":{"storage":{"data_source":{"engine":"local"}}}
+            }'
+
     log_info "State: salt.master.env"
-    if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env; then
+    if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env pillar="$PILLAR"; then
       log_err "State salt.master.env failed, keep your eyes wide open."
     fi
 
     log_info "State: salt.master.pillar"
-    retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.pillar pillar='{"reclass":{"storage":{"data_source":{"engine":"local"}}}}'
+    retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.pillar pillar="$PILLAR"
     # Note: sikp reclass data dir states
     #       in order to avoid pull from configured repo/branch
 
@@ -585,18 +609,22 @@ saltmaster_init() {
     pushd $RECLASS_ROOT
     if [ $(git diff --name-only nodes | sort | uniq | wc -l) -ge 1 ]; then
       git status || true
-      log_warn "Locally modified $RECLASS_ROOT/nodes found. (Possibly salt-master minimized setup from salt-master-setup.sh call)"
+      log_warn "Locally modified $RECLASS_ROOT/nodes found. (Possibly salt-master minimized setup from bootstrap.sh call)"
       log_info "Checkout HEAD state of $RECLASS_ROOT/nodes/*."
       git checkout -- $RECLASS_ROOT/nodes || true
       log_info "Re-Run states: salt.master.env and salt.master.pillar according the HEAD state."
       log_info "State: salt.master.env"
-      if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env; then
+      if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env pillar="$PILLAR"; then
         log_err "State salt.master.env failed, keep your eyes wide open."
       fi
       log_info "State: salt.master.pillar"
-      retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.pillar pillar='{"reclass":{"storage":{"data_source":{"engine":"local"}}}}'
+      retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.pillar pillar="$PILLAR"
     fi
     popd
+
+    # finally re-configure salt master conf, ie: may remove ignore_class_notfound option
+    log_info "State: salt.master.service"
+    $SUDO salt-call ${SALT_OPTS} state.apply salt.master.service
 
     log_info "State: salt.master.storage.node"
     set +e
