@@ -591,9 +591,7 @@ saltmaster_init() {
 
 
     # workarond isolated and not fully bootstraped environments
-    PILLAR='{"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": "'${RECLASS_IGNORE_CLASS_NOTFOUND:-False}'"}}}},
-             "reclass":{"storage":{"data_source":{"engine":"local"}}}
-            }'
+    PILLAR='{"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": "'${RECLASS_IGNORE_CLASS_NOTFOUND:-False}'"}}}}, "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
 
     log_info "State: salt.master.env"
     if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env pillar="$PILLAR"; then
