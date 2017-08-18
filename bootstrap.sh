@@ -621,10 +621,10 @@ function verify_salt_master() {
     test -n "$MASTER_HOSTNAME" || exit 1
 
     if [[ $VERIFY_SALT_CALL =~ ^(True|true|1|yes)$ ]]; then
-      $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} grains.item roles > /tmp/${MASTER_HOSTNAME}.grains.item.roles
-      $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} state.show_lowstate > /tmp/${MASTER_HOSTNAME}.state.show_state
       $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} reclass.validate_yaml > /tmp/${MASTER_HOSTNAME}.reclass.validate_yaml
       $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} reclass.validate_pillar > /tmp/${MASTER_HOSTNAME}.reclass.validate_pillar
+      $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} grains.item roles > /tmp/${MASTER_HOSTNAME}.grains.item.roles
+      $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} state.show_lowstate > /tmp/${MASTER_HOSTNAME}.state.show_state
       $SUDO salt-call --no-color grains.items
       $SUDO salt-call --no-color pillar.data
     fi
