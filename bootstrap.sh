@@ -626,6 +626,7 @@ saltmaster_init() {
 
     log_info "State: salt.master.storage.node"
     set +e
+    # TODO: PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
     $SUDO salt-call ${SALT_OPTS} state.apply reclass.storage.node
     ret=$?
     set -e
@@ -655,11 +656,14 @@ function verify_salt_master() {
     test -n "$MASTER_HOSTNAME" || exit 1
 
     if [[ $VERIFY_SALT_CALL =~ ^(True|true|1|yes)$ ]]; then
+      $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} reclass.validate_yaml > /tmp/${MASTER_HOSTNAME}.reclass.validate_yaml
+      $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} reclass.validate_pillar > /tmp/${MASTER_HOSTNAME}.reclass.validate_pillar
       $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} grains.item roles > /tmp/${MASTER_HOSTNAME}.grains.item.roles
       $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} state.show_lowstate > /tmp/${MASTER_HOSTNAME}.state.show_state
       $SUDO salt-call --no-color grains.items
       $SUDO salt-call --no-color pillar.data
     fi
+    # TODO: REMOVE reclass --nodeinfo section / run only on debug - as the only required is reclass.validate_*
     if ! $SUDO reclass --nodeinfo ${MASTER_HOSTNAME} > /tmp/${MASTER_HOSTNAME}.reclass.nodeinfo; then
         log_err "For more details see full log /tmp/${MASTER_HOSTNAME}.reclass.nodeinfo"
         exit 1
@@ -753,7 +757,7 @@ function bootstrap() {
   system_config_master
   saltmaster_bootstrap &&\
   saltmaster_init &&\
-  verify_salt_minions
+  #verify_salt_minions
 }
 
 function default() {
