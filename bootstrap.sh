@@ -756,7 +756,7 @@ function bootstrap() {
 
   system_config_master
   saltmaster_bootstrap &&\
-  saltmaster_init &&\
+  saltmaster_init #&&\
   #verify_salt_minions
 }
 
