@@ -123,6 +123,10 @@ log_warn() {
     echo -e "${MAGENTA}[WARN] $* ${NC}"
 }
 
+log_debug() {
+    echo -e "${CYAN}[WARN] $* ${NC}"
+}
+
 log_err() {
     echo -e "${RED}[ERROR] $* ${NC}" >&2
 }
@@ -295,6 +299,8 @@ EOF
   CONFIG=$(find ${RECLASS_ROOT}/nodes -name ${MINION_ID}.yml| grep yml | tail -n1)
   CONFIG=${CONFIG:-${RECLASS_ROOT}/nodes/_generated/${MINION_ID}.yml}
   if [[ $SALT_MASTER_BOOTSTRAP_MINIMIZED =~ ^(True|true|1|yes)$ || ! -f "${CONFIG}" ]]; then
+  log_warn "Salt Master node specification has not been found in model."
+  log_warn "Creating temporary cfg01 configuration for bootstrap: ${CONFIG}"
   cat <<-EOF > ${CONFIG}
 	classes:
 	- cluster.${CLUSTER_NAME}.infra.config
@@ -314,10 +320,6 @@ EOF
 	    system:
 	      name: ${HOSTNAME:-cfg01}
 	      domain: ${DOMAIN:-$CLUSTER_NAME.local}
-	  #reclass:
-	  #  storage:
-	  #    data_source:
-	  #      engine: local
 	# ########
 EOF
 
@@ -342,6 +344,9 @@ EOF
 		# vim: ft=yaml sw=2 ts=2 sts=2
 EOF
   fi
+
+  log_debug "Salt Master node config yaml:"
+  log_debug "$(cat ${CONFIG})"
 }
 
 configure_salt_minion()
