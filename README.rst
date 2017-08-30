@@ -22,7 +22,7 @@ TL;DR:
 .. code-block:: bash
 
   cd /srv/salt/scripts
-  MASTER_HOSTNAME=cfg01.infra.ci.local ./salt-master-init.sh
+  MASTER_HOSTNAME=cfg01.infra.ci.local ./bootstrap.sh
 
 .. note:
   Creates /srv/salt/scripts/.bootstrap.sh if succesfully passed the "setup script" 
