@@ -25,8 +25,8 @@ TL;DR:
   MASTER_HOSTNAME=cfg01.infra.ci.local ./bootstrap.sh
 
 .. note:
-  Creates /srv/salt/scripts/.bootstrap.sh if succesfully passed the "setup script" 
-  with the aim to avoid subsequent run's.
+  Creates /srv/salt/scripts/.salt-master-setup.sh.passed if succesfully passed the "setup script" 
+  with the aim to avoid subsequent setup.
 
 
 **salt-master-setup.sh** (DEPRECATED, use bootstrap.sh instead)
@@ -72,11 +72,24 @@ Bootstrap the Salt Master node
   MASTER_HOSTNAME=cfg01.infra.ci.local ./bootstrap.sh
   
   
-  Additional bootstrap ENV variables
-  ----------------------------------
-  (for full list of options see the *bootstrap.sh* source)
+Verify
+------
+Get the *verify.sh* script from https://github.com/salt-formulas/salt-formulas/tree/master/deploy/model
+
+.. code-block:: bash
+
+  cd /srv/salt/reclass
+  MASTER_HOSTNAME=$(hostname -f) ./verify.sh
   
-  .. code-block:: bash
+  # or individually, if minions get generated under nodes/_generated
+  ./verify.sh ctl01.k8s-cis-virtual.local
+  
+  
+Additional bootstrap ENV variables
+----------------------------------
+(for full list of options see the *bootstrap.sh* source)
+  
+.. code-block:: bash
 
     # reclass
     export RECLASS_ADDRESS=<repo url>   ## if not already cloned in /srv/salt/reclass >
