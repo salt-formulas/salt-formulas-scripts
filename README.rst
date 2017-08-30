@@ -10,40 +10,14 @@ This ``deploy/scripts`` serve as shared common place to link any deployment tool
 
 Salt bootstrap scripts. Local copy of upstream `https://bootstrap.saltstack.com/`_.
 
+**bootstrap.sh**
 
-**salt-master-setup.sh**
+Script with function library to 
+* install and configure *salt master* and *minions*
+* bootstrap *salt master* with *salt-formulas* common prerequisites in mind
+* validate reclass the model / pillar for all nodes
 
-Script to install and configure salt *minion* but mostly *salt master* with *salt-formulas* common prerequisites in mind.
-Configuration driven by environment variables, see source for more details...
-
-.. code-block:: bash
-
-  # reclass
-  export RECLASS_ADDRESS=<repo url>   ## if not already cloned in /srv/salt/reclass >
-
-  # formula
-  export FORMULAS_BRANCH=master
-  export FORMULAS_SOURCE=git
-
-  # system / host / salt master minion id
-  export HOSTNAME=cfg01
-  export DOMAIN=infra.ci.local
-  #export MINION_ID
-
-  # salt
-  export SALT_MASTER_BOOTSTRAP_MINIMIZED=False
-  export BOOTSTRAP_SALTSTACK_OPTS=" -dX stable 2016.3"
-  export EXTRA_FORMULAS="prometeus"
-
-  # environment
-  SALT_SOURCE=${SALT_SOURCE:-pkg}
-  SALT_VERSION=${SALT_VERSION:-latest}
-
-
-**salt-master-init.sh**
-
-Script to bootstrap *salt master* and verify the model. To install salt master uses ``salt-master-setup.sh``.
-Configuration driven by environment variables.
+TL;DR:
 
 .. code-block:: bash
 
@@ -51,8 +25,20 @@ Configuration driven by environment variables.
   MASTER_HOSTNAME=cfg01.infra.ci.local ./salt-master-init.sh
 
 .. note:
-  Creates /srv/salt/scripts/.salt-master-setup.sh if succesfully passed the "setup script" 
+  Creates /srv/salt/scripts/.bootstrap.sh if succesfully passed the "setup script" 
   with the aim to avoid subsequent run's.
+
+
+**salt-master-setup.sh** (DEPRECATED, use bootstrap.sh instead)
+
+Script to install and configure salt *minion* but mostly *salt master* with *salt-formulas* common prerequisites in mind.
+Configuration driven by environment variables, see source for more details...
+
+
+**salt-master-init.sh** (DEPRECATED, use bootstrap.sh instead)
+
+Script to bootstrap *salt master* and verify the model. To install salt master uses ``salt-master-setup.sh``.
+Configuration driven by environment variables.
 
 
 **formula-fetch.sh**
@@ -75,13 +61,52 @@ Bootstrap the Salt Master node
   git clone https://github.com/salt-formulas/salt-formulas-scripts /srv/salt/scripts
 
   git clone <model-repository> /srv/salt/reclass
+  cd /srv/salt/reclass
   git submodule update --init --recursive
-  # or
-  # (if system level is not add yet)
+  
+  # OR (if system level is not add yet)
   git submodule add https://github.com/Mirantis/reclass-system-salt-model \
     /srv/salt/reclass/classes/system/
 
   cd /srv/salt/scripts
-  MASTER_HOSTNAME=cfg01.infra.ci.local ./salt-master-init.sh
+  MASTER_HOSTNAME=cfg01.infra.ci.local ./bootstrap.sh
+  
+  
+  Additional bootstrap ENV variables
+  ----------------------------------
+  (for full list of options see the *bootstrap.sh* source)
+  
+  .. code-block:: bash
+
+    # reclass
+    export RECLASS_ADDRESS=<repo url>   ## if not already cloned in /srv/salt/reclass >
+
+    # formula
+    export FORMULAS_BRANCH=master
+    export FORMULAS_SOURCE=git
+
+    # system / host / salt master minion id
+    export HOSTNAME=cfg01
+    export DOMAIN=infra.ci.local
+    #export MINION_ID
+
+    # salt
+    export BOOTSTRAP_SALTSTACK_OPTS=" -dX stable 2016.3"
+    export EXTRA_FORMULAS="prometeus"
+    SALT_SOURCE=${SALT_SOURCE:-pkg}
+    SALT_VERSION=${SALT_VERSION:-latest}
+    
+    # bootstrap
+    export SALT_MASTER_BOOTSTRAP_MINIMIZED=False
+    export CLUSTER_NAME=<%= cluster %>
+    
+    # workarounds
+    export RECLASS_IGNORE_CLASS_NOTFOUND=False
+    export EXTRA_FORMULAS="prometheus telegraph"
+
+  
+  
+  
+  
 
 
