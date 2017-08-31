@@ -19,10 +19,24 @@ Script with function library to
 
 TL;DR:
 
+Bootstrap salt-minion:
+
+.. code-block:: bash
+
+  export HTTPS_PROXY="http://proxy.your.corp:8080"; export HTTP_PROXY=$HTTPS_PROXY
+  
+  export MASTER_HOSTNAME=cfg01.infra.ci.local || export MASTER_IP=10.0.0.10
+  export MINION_ID=$(hostname -f)             || export HOSTNAME=prx01 DOMAIN=infra.ci.local
+  source <(curl -qL https://raw.githubusercontent.com/salt-formulas/salt-formulas-scripts/master/bootstrap.sh)
+  install_salt_minion_pkg
+
+
+Bootstrap salt-master:
+
 .. code-block:: bash
 
   cd /srv/salt/scripts
-  MASTER_HOSTNAME=cfg01.infra.ci.local ./bootstrap.sh
+  HOSTNAME=cfg01 DOMAIN=infra.ci.local ./bootstrap.sh
 
 .. note:
   Creates /srv/salt/scripts/.salt-master-setup.sh.passed if succesfully passed the "setup script" 
@@ -69,7 +83,7 @@ Bootstrap the Salt Master node
     /srv/salt/reclass/classes/system/
 
   cd /srv/salt/scripts
-  MASTER_HOSTNAME=cfg01.infra.ci.local ./bootstrap.sh
+  HOSTNAME=cfg01 DOMAIN=infra.ci.local ./bootstrap.sh
   
   
 Verify
@@ -79,9 +93,10 @@ Get the *verify.sh* script from https://github.com/salt-formulas/salt-formulas/t
 .. code-block:: bash
 
   cd /srv/salt/reclass
-  MASTER_HOSTNAME=$(hostname -f) ./verify.sh
+  HOSTNAME=cfg01 DOMAIN=infra.ci.local ./verify.sh          # or just ./verify.sh
+
   
-  # or individually, if minions get generated under nodes/_generated
+  # individuall minions, if minions get generated under nodes/_generated
   ./verify.sh ctl01.k8s-cis-virtual.local
   
   
@@ -101,7 +116,10 @@ Additional bootstrap ENV variables
     # system / host / salt master minion id
     export HOSTNAME=cfg01
     export DOMAIN=infra.ci.local
+    # Following variables are calculated from the above if not provided
     #export MINION_ID
+    #export MASTER_HOSTNAME
+    #export MASTER_IP
 
     # salt
     export BOOTSTRAP_SALTSTACK_OPTS=" -dX stable 2016.3"
