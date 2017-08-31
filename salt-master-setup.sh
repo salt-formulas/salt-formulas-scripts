@@ -304,8 +304,6 @@ install_salt_master_pip()
 install_salt_minion_pkg()
 {
 
-    configure_pkg_repo
-
     echo -e "\nInstalling salt minion ...\n"
 
     case $PLATFORM_FAMILY in
