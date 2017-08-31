@@ -73,7 +73,6 @@ export HOSTNAME=${HOSTNAME:-cfg01}
 export DOMAIN=${DOMAIN:-bootstrap.local}
 
 # salt
-export SALT_MASTER=${SALT_MASTER:-127.0.0.1} # ip or fqdn
 export MINION_ID=${MINION_ID:-${HOSTNAME}.${DOMAIN}}
 export MASTER_HOSTNAME=${MASTER_HOSTNAME:-${HOSTNAME}.${DOMAIN}}
 
@@ -306,13 +305,13 @@ EOF
 	- cluster.${CLUSTER_NAME}.infra.config
 	parameters:
 	  _param:
-	    single_address: $SALT_MASTER
-	    salt_master_host: $SALT_MASTER
+	    single_address: ${MASTER_IP:-$MASTER_HOSTNAME}
+	    salt_master_host: ${MASTER_IP:-$MASTER_HOSTNAME}
 	    salt_master_base_environment: $SALT_ENV
 	    salt_formula_branch: ${SALT_FORMULAS_BRANCH:-master}
 	    reclass_data_revision: ${RECLASS_BRANCH:-master}
 	    reclass_data_repository: "$RECLASS_ADDRESS"
-	    reclass_config_master: $SALT_MASTER
+	    reclass_config_master: ${MASTER_IP:-$MASTER_HOSTNAME}
 	    linux_system_codename: ${DISTRIB_CODENAME}
 	    cluster_name: ${CLUSTER_NAME}
 	    cluster_domain: ${DOMAIN:-$CLUSTER_NAME.local}
@@ -353,7 +352,7 @@ configure_salt_minion()
 {
   [ ! -d /etc/salt/minion.d ] && mkdir -p /etc/salt/minion.d
   cat <<-EOF > /etc/salt/minion.d/minion.conf
-	master: $SALT_MASTER
+	master: ${MASTER_IP:-$MASTER_HOSTNAME}
 	id: $MINION_ID
 	EOF
 }
@@ -437,8 +436,6 @@ install_salt_master_pip()
 
 install_salt_minion_pkg()
 {
-
-    configure_pkg_repo
 
     echo -e "\nInstalling salt minion ...\n"
 
@@ -548,7 +545,7 @@ saltmaster_bootstrap() {
     pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
     pkill -9 salt-minion
     test -e ${SCRIPTS}/.salt-master-setup.sh.passed || {
-        export SALT_MASTER=localhost
+        export MASTER_IP=localhost
         export MINION_ID=${MASTER_HOSTNAME}
         if ! [[ $DEBUG =~ ^(True|true|1|yes)$ ]]; then
           SALT_MASTER_SETUP_OUTPUT='/dev/stdout'
