@@ -101,7 +101,7 @@ system_config() {
 saltmaster_bootstrap() {
 
     log_info "Salt master, minion setup (salt-master-setup.sh)"
-    test -n "$MASTER_HOSTNAME" || exit 1
+    test -n "$MASTER_HOSTNAME" || echo "missing \$MASTER_HOSTNAME" && return 
 
     pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
     pkill -9 salt-minion
@@ -142,7 +142,7 @@ saltmaster_bootstrap() {
 saltmaster_init() {
 
     log_info "Runing saltmaster states"
-    test -n "$MASTER_HOSTNAME" || exit 1
+    test -n "$MASTER_HOSTNAME" || echo "missing \$MASTER_HOSTNAME" && return 
 
     set -e
     $SUDO salt-call saltutil.sync_all >/dev/null
@@ -210,7 +210,7 @@ function verify_salt_master() {
     set -e
 
     log_info "Verify Salt master"
-    test -n "$MASTER_HOSTNAME" || exit 1
+    test -n "$MASTER_HOSTNAME" || echo "missing \$MASTER_HOSTNAME" && return 
 
     if [[ $VERIFY_SALT_CALL =~ ^(True|true|1|yes)$ ]]; then
       $SUDO salt-call ${SALT_OPTS} --id=${MASTER_HOSTNAME} grains.item roles > /tmp/${MASTER_HOSTNAME}.grains.item.roles
