@@ -69,7 +69,9 @@ declare -a FORMULAS_SALT_MASTER=(linux reclass salt git $(echo $FORMULAS_SALT_MA
 export FORMULAS_SALT_MASTER
 
 # system / host
-export HOSTNAME=${HOSTNAME:-cfg01}
+export HOSTNAME=${HOSTNAME:-`hostname -s`}
+export HOSTNAME=${HOSTNAME//.*/}
+export DOMAIN=${DOMAIN:-`hostname -d`}
 export DOMAIN=${DOMAIN:-bootstrap.local}
 
 # salt
