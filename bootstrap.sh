@@ -251,7 +251,11 @@ configure_salt_master()
   fi
 
   # to force alternative reclass module path
-  RECLASS_SOURCE_PATH=${RECLASS_SOURCE_PATH:-""}
+  if [ -n "$RECLASS_SOURCE_PATH" ]; then
+    RECLASS_SOURCE_PATH="reclass_source_path: ${RECLASS_SOURCE_PATH}"
+  else
+    RECLASS_SOURCE_PATH=""
+  fi
 
   [ ! -d /etc/salt/master.d ] && mkdir -p /etc/salt/master.d
   cat <<-EOF > /etc/salt/master.d/master.conf
