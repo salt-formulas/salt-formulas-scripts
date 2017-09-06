@@ -250,6 +250,9 @@ configure_salt_master()
     IGNORE_CLASS_NOTFOUND="ignore_class_notfound: True"
   fi
 
+  # to force alternative reclass module path
+  RECLASS_SOURCE_PATH=${RECLASS_SOURCE_PATH:-""}
+
   [ ! -d /etc/salt/master.d ] && mkdir -p /etc/salt/master.d
   cat <<-EOF > /etc/salt/master.d/master.conf
 	file_roots:
@@ -265,6 +268,7 @@ configure_salt_master()
 	  storage_type: yaml_fs
 	  inventory_base_uri: ${RECLASS_ROOT}
 	  ${IGNORE_CLASS_NOTFOUND}
+	  ${RECLASS_SOURCE_PATH}
 	ext_pillar:
 	  - reclass: *reclass
 	master_tops:
@@ -280,6 +284,7 @@ EOF
 	output: yaml
 	inventory_base_uri: ${RECLASS_ROOT}
 	${IGNORE_CLASS_NOTFOUND}
+	${RECLASS_SOURCE_PATH}
 EOF
 
   clone_reclass
