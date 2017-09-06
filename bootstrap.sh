@@ -288,7 +288,6 @@ EOF
 	output: yaml
 	inventory_base_uri: ${RECLASS_ROOT}
 	${IGNORE_CLASS_NOTFOUND}
-	${RECLASS_SOURCE_PATH}
 EOF
 
   clone_reclass
