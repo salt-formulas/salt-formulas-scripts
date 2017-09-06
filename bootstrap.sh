@@ -301,9 +301,9 @@ EOF
     git submodule update --init --recursive
   fi
 
-  #sed -ie "s#\(reclass_data_revision.\).*#\1 $RECLASS_BRANCH#" $(find nodes -name ${MASTER_HOSTNAME}.yml|tail -n1)
-
   mkdir -vp ${RECLASS_ROOT}/nodes/_generated
+  rm -rvf ${RECLASS_ROOT}/nodes/_generated/*
+
   CONFIG=$(find ${RECLASS_ROOT}/nodes -name ${MINION_ID}.yml| grep yml | tail -n1)
   CONFIG=${CONFIG:-${RECLASS_ROOT}/nodes/_generated/${MINION_ID}.yml}
   if [[ $SALT_MASTER_BOOTSTRAP_MINIMIZED =~ ^(True|true|1|yes)$ || ! -f "${CONFIG}" ]]; then
@@ -569,10 +569,6 @@ saltmaster_bootstrap() {
           $SUDO touch ${SCRIPTS}/.salt-master-setup.sh.passed
         fi
     }
-
-    log_info "Clean up generated"
-    cd $RECLASS_ROOT
-    $SUDO rm -rf $RECLASS_ROOT/nodes/_generated/*
 
     log_info "Re/starting salt services"
     pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
