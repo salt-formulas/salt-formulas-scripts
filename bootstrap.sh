@@ -663,6 +663,7 @@ saltmaster_init() {
 
     log_info "Re/starting salt services"
     $SUDO sed -i 's/^master:.*/master: localhost/' /etc/salt/minion.d/minion.conf
+    $SUDO service salt-master restart >/dev/null
     $SUDO service salt-minion restart >/dev/null
     $SUDO salt-call ${SALT_OPTS} saltutil.sync_all >/dev/null
 
