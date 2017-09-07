@@ -367,6 +367,16 @@ configure_salt_minion()
 	EOF
 }
 
+install_reclass()
+{
+  VERSION=${1:-$RECLASS_VERSION}
+  VERSION=${VERSION:-master}
+  # tries to replace all local version system version
+  for s in $(python -c "import site; print(' '.join(site.getsitepackages()))"); do
+    pip install --upgrade --force-reinstall -I \
+    -t "$s" git+https://github.com/salt-formulas/reclass.git@${VERSION};
+  done
+}
 
 install_salt_master_pkg()
 {
@@ -570,6 +580,11 @@ saltmaster_bootstrap() {
           $SUDO touch ${SCRIPTS}/.salt-master-setup.sh.passed
         fi
     }
+
+    if [[ $RECLASS_VERSION =~ ^(dev|devel|master)$ ]]; then
+      log_warn "Install development version of reclass from master branch"
+      install_reclass ${RECLASS_VERSION/dev*/master}
+    fi
 
     log_info "Re/starting salt services"
     pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
