@@ -373,7 +373,7 @@ install_reclass()
   VERSION=${VERSION:-master}
   # tries to replace all local version system version
   for s in $(python -c "import site; print(' '.join(site.getsitepackages()))"); do
-    $SUDO pip install --upgrade --force-reinstall -I \
+    sudo -H pip install --upgrade --force-reinstall -I \
     -t "$s" git+https://github.com/salt-formulas/reclass.git@${VERSION};
   done
 }
