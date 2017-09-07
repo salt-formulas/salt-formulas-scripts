@@ -373,7 +373,7 @@ install_reclass()
   VERSION=${VERSION:-master}
   # tries to replace all local version system version
   for s in $(python -c "import site; print(' '.join(site.getsitepackages()))"); do
-    pip install --upgrade --force-reinstall -I \
+    $SUDO pip install --upgrade --force-reinstall -I \
     -t "$s" git+https://github.com/salt-formulas/reclass.git@${VERSION};
   done
 }
@@ -582,7 +582,7 @@ saltmaster_bootstrap() {
     }
 
     if [[ $RECLASS_VERSION =~ ^(dev|devel|master)$ ]]; then
-      log_warn "Install development version of reclass from master branch"
+      log_warn "Install development version of reclass"
       install_reclass ${RECLASS_VERSION/dev*/master}
     fi
 
