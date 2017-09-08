@@ -473,8 +473,7 @@ install_salt_minion_pkg()
 
 
     configure_salt_minion
-
-    $SVCTOOL salt-minion restart
+    #$SVCTOOL salt-minion restart
 }
 
 install_salt_minion_pip()
@@ -485,7 +484,7 @@ install_salt_minion_pip()
     ln -s /usr/local/bin/salt-minion /usr/bin/salt-minion
 
     configure_salt_minion
-    $SVCTOOL salt-minion restart
+    #$SVCTOOL salt-minion restart
 }
 
 
