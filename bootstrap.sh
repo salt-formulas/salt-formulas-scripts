@@ -90,7 +90,7 @@ if [ "$FORMULAS_SOURCE" == "git" ]; then
 elif [ "$FORMULAS_SOURCE" == "pkg" ]; then
   SALT_ENV=${SALT_ENV:-prd}
 fi
-eval $(cat /etc/*release 2> /dev/null)
+eval "$(grep -h '=' /etc/*release 2> /dev/null)"
 PLATFORM_FAMILY=$(echo ${ID_LIKE// */} | tr A-Z a-z)
 case $PLATFORM_FAMILY in
   debian )
