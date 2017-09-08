@@ -181,7 +181,7 @@ retry() {
 }
 
 function clone_reclass() {
-  if [ ! -d ${RECLASS_ROOT} ]; then
+  if [ ! -d ${RECLASS_ROOT}/classes ]; then
     # No reclass at all, clone from given address
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
     if echo ${RECLASS_BRANCH:-master} | egrep -q "^refs"; then		
@@ -193,6 +193,13 @@ function clone_reclass() {
         git clone -b ${RECLASS_BRANCH:-master} ${RECLASS_ADDRESS} ${RECLASS_ROOT};		
     fi;
   fi;
+  if [ ! -d ${RECLASS_ROOT}/classes -o ! -d ${RECLASS_ROOT}/nodes ]; then
+    log_err "Reclass ${RECLASS_ROOT} is not fetched locally;"
+    ls -Rla ${RECLASS_ROOT}
+    exit 1
+  fi;
+  $SUDO mkdir -p $RECLASS_ROOT/classes/service
+  $SUDO mkdir -p $RECLASS_ROOT/nodes/_generated
 }
 
 
@@ -226,9 +233,6 @@ system_config_master() {
 
     system_config_salt_modules_prereq
     system_config_ssh_conf
-
-    $SUDO mkdir -p $RECLASS_ROOT/classes/service
-    $SUDO mkdir -p $RECLASS_ROOT/nodes/_generated
 
     if ! grep '127.0.1.2.*salt' /etc/hosts; then
       echo "127.0.1.2  salt" | $SUDO tee -a /etc/hosts >/dev/null
