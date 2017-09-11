@@ -319,7 +319,7 @@ EOF
 	- cluster.${CLUSTER_NAME}.infra.config
 	parameters:
 	  _param:
-	    single_address: ${MASTER_IP:-$MASTER_HOSTNAME}
+	    single_address: ${MASTER_IP}
 	    salt_master_host: ${MASTER_IP:-$MASTER_HOSTNAME}
 	    salt_master_base_environment: $SALT_ENV
 	    salt_formula_branch: ${SALT_FORMULAS_BRANCH:-master}
@@ -568,7 +568,7 @@ saltmaster_bootstrap() {
     pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
     pkill -9 salt-minion
     test -e ${SCRIPTS}/.salt-master-setup.sh.passed || {
-        export MASTER_IP=localhost
+        export MASTER_IP=${MASTER_IP:-127.0.0.1}
         export MINION_ID=${MASTER_HOSTNAME}
         if ! [[ $DEBUG =~ ^(True|true|1|yes)$ ]]; then
           SALT_MASTER_SETUP_OUTPUT='/dev/stdout'
