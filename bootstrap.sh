@@ -320,12 +320,12 @@ EOF
 	parameters:
 	  _param:
 	    single_address: ${MASTER_IP}
-	    salt_master_host: ${MASTER_IP:-$MASTER_HOSTNAME}
+	    salt_master_host: ${MASTER_DEPLOY_IP:-$MASTER_HOSTNAME}
 	    salt_master_base_environment: $SALT_ENV
 	    salt_formula_branch: ${SALT_FORMULAS_BRANCH:-master}
 	    reclass_data_revision: ${RECLASS_BRANCH:-master}
 	    reclass_data_repository: "$RECLASS_ADDRESS"
-	    reclass_config_master: ${MASTER_IP:-$MASTER_HOSTNAME}
+	    reclass_config_master: ${MASTER_DEPLOY_IP:-$MASTER_HOSTNAME}
 	    linux_system_codename: ${DISTRIB_CODENAME}
 	    cluster_name: ${CLUSTER_NAME}
 	    cluster_domain: ${DOMAIN:-$CLUSTER_NAME.local}
@@ -568,6 +568,7 @@ saltmaster_bootstrap() {
     pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
     pkill -9 salt-minion
     test -e ${SCRIPTS}/.salt-master-setup.sh.passed || {
+        export MASTER_DEPLOY_IP=${MASTER_DEPLOY_IP:-127.0.0.1}
         export MASTER_IP=${MASTER_IP:-127.0.0.1}
         export MINION_ID=${MASTER_HOSTNAME}
         if ! [[ $DEBUG =~ ^(True|true|1|yes)$ ]]; then
