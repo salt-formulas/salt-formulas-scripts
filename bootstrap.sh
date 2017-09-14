@@ -319,7 +319,6 @@ EOF
 	- cluster.${CLUSTER_NAME}.infra.config
 	parameters:
 	  _param:
-	    single_address: ${MASTER_IP}
 	    salt_master_host: ${MASTER_IP:-$MASTER_HOSTNAME}
 	    salt_master_base_environment: $SALT_ENV
 	    salt_formula_branch: ${SALT_FORMULAS_BRANCH:-master}
