@@ -36,7 +36,7 @@ Bootstrap salt-master:
 .. code-block:: bash
 
   cd /srv/salt/scripts
-  HOSTNAME=cfg01 DOMAIN=infra.ci.local ./bootstrap.sh
+  CLUSTER_NAME=regionOne HOSTNAME=cfg01 DOMAIN=infra.ci.local ./bootstrap.sh
 
 .. note:
   Creates /srv/salt/scripts/.salt-master-setup.sh.passed if succesfully passed the "setup script" 
