@@ -141,7 +141,7 @@ configure_pkg_repo()
             which add-apt-repository || $SUDO apt-get install -y software-properties-common
             $SUDO add-apt-repository -y ppa:${APT_REPOSITORY_PPA}
           else
-            echo -e  "$APT_REPOSITORY " | $SUDO tee /etc/apt/sources.list.d/bootstrap.list >/dev/null
+            echo -e  "$APT_REPOSITORY " | $SUDO tee /etc/apt/sources.list.d/mcp_salt.list >/dev/null
             curl -sL $APT_REPOSITORY_GPG | $SUDO apt-key add -
           fi
           $SUDO apt-get clean
