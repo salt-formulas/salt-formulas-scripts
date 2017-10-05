@@ -175,9 +175,9 @@ retry() {
         tries=3
     fi
     for i in $(seq 1 $tries); do
-        "$@" && return 0 || sleep $i
+        "$@" && return $? || (ret=$?; sleep $i)
     done
-    return 1
+    return $ret
 }
 
 function clone_reclass() {
@@ -647,12 +647,12 @@ saltmaster_init() {
 
     # finally re-configure salt master conf, ie: may remove ignore_class_notfound option
     log_info "State: salt.master.service"
-    $SUDO salt-call ${SALT_OPTS} state.apply salt.master.service || true
+    retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.service || true
 
     log_info "State: salt.master.storage.node"
     set +e
     # TODO: PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
-    $SUDO salt-call ${SALT_OPTS} state.apply reclass.storage.node
+    retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply reclass.storage.node
     ret=$?
     set -e
 
