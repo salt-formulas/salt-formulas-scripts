@@ -174,8 +174,10 @@ retry() {
     else
         tries=3
     fi
+    ret=1
     for i in $(seq 1 $tries); do
-        "$@" && return $? || (ret=$?; sleep $i)
+        "$@" && return $? || ret=$?
+        sleep $i
     done
     return $ret
 }
