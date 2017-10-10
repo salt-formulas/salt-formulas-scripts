@@ -566,7 +566,7 @@ saltmaster_bootstrap() {
     # override some envs from cluster level *.env, use with care
     source_local_envs
 
-    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
+    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {} || true
     pkill -9 salt-minion
     test -e ${SCRIPTS}/.salt-master-setup.sh.passed || {
         export MASTER_IP=${MASTER_IP:-127.0.0.1}
@@ -591,12 +591,14 @@ saltmaster_bootstrap() {
     fi
 
     log_info "Re/starting salt services"
-    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
-    pkill -9 salt-minion
-    sleep 1
-    $SUDO service salt-master restart
-    $SUDO service salt-minion restart
+    $SUDO service salt-minion stop
+    $SUDO service salt-master stop
     sleep 10
+    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {} || true
+    pkill -9 salt-minion
+    $SUDO service salt-master start
+    $SUDO service salt-minion start
+    sleep 15
 }
 
 # Init salt master
@@ -669,11 +671,11 @@ saltmaster_init() {
     $SUDO sed -i 's/^master:.*/master: localhost/' /etc/salt/minion.d/minion.conf
     $SUDO service salt-minion stop
     $SUDO service salt-master stop
-    sleep 3
-    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
+    sleep 10
+    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {} || true
     $SUDO service salt-master start
     $SUDO service salt-minion start
-    sleep 10
+    sleep 15
     $SUDO salt-call ${SALT_OPTS} saltutil.sync_all >/dev/null
 
     verify_salt_master
