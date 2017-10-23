@@ -11,7 +11,7 @@ fi
 ## Env Options
 options() {
     export LC_ALL=C
-    SALT_LOG_LEVEL="--state-verbose=false -lerror"
+    SALT_LOG_LEVEL="${SALT_LOG_LEVEL:- --state-verbose=false -lerror}"
     SALT_OPTS="${SALT_OPTS:- --timeout=120 --state-output=changes --retcode-passthrough --force-color $SALT_LOG_LEVEL }"
     RECLASS_ROOT=${RECLASS_ROOT:-/srv/salt/reclass}
     BOOTSTRAP_SALTSTACK=${BOOTSTRAP_SALTSTACK:-True}
@@ -101,7 +101,7 @@ system_config() {
 saltmaster_bootstrap() {
 
     log_info "Salt master, minion setup (salt-master-setup.sh)"
-    test -n "$MASTER_HOSTNAME" || echo "missing \$MASTER_HOSTNAME" && return 
+    test -n "$MASTER_HOSTNAME" || (echo "missing \$MASTER_HOSTNAME" && return)
 
     pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {}
     pkill -9 salt-minion
