@@ -49,7 +49,7 @@ export SALT_STATE_RETRY=${SALT_STATE_RETRY:-3}
 test -e /etc/lsb-release && eval $(cat /etc/lsb-release)
 which lsb_release && DISTRIB_CODENAME=${DISTRIB_CODENAME:-$(lsb_release -cs)}
 #
-export APT_REPOSITORY="deb [arch=amd64] http://apt.mirantis.com/${DISTRIB_CODENAME} ${DISTRIB_REVISION:-stable} salt"
+export APT_REPOSITORY=${APT_REPOSITORY:- deb [arch=amd64] http://apt.mirantis.com/${DISTRIB_CODENAME} ${DISTRIB_REVISION:-stable} salt}
 export APT_REPOSITORY_GPG=${APT_REPOSITORY_GPG:-http://apt.mirantis.com/public.gpg}
 
 # reclass
