@@ -177,7 +177,9 @@ retry() {
     ret=1
     for i in $(seq 1 $tries); do
         "$@" && return $? || ret=$?
-        sleep $i
+        $SVCTOOL salt-master restart
+        $SVCTOOL salt-minion restart
+        sleep 15
     done
     return $ret
 }
