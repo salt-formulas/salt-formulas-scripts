@@ -255,7 +255,7 @@ configure_salt_master()
   echo "Configuring salt-master ..."
 
   if [[ $RECLASS_IGNORE_CLASS_NOTFOUND =~ ^(True|true|1|yes)$ ]]; then
-    IGNORE_CLASS_NOTFOUND="ignore_class_notfound: True"
+    IGNORE_CLASS_NOTFOUND="ignore_class_notfound: True\n  ignore_class_regexp:\n  - 'service.*'"
   fi
 
   # to force alternative reclass module path
@@ -620,9 +620,11 @@ saltmaster_init() {
     #   log_warn "Node verification before initialization failed."; cat /tmp/${MASTER_HOSTNAME}.pillar;
     #fi
 
-
     # workarond isolated and not fully bootstraped environments
-    PILLAR='{"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": "'${RECLASS_IGNORE_CLASS_NOTFOUND:-False}'"}}}}, "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
+    if [[ $RECLASS_IGNORE_CLASS_NOTFOUND =~ ^(True|true|1|yes)$ ]]; then
+      SALT_MASTER_PILLAR='"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": "\'${RECLASS_IGNORE_CLASS_NOTFOUND:-False}\'", "ignore_class_regexp": ["service.*"]}}}},'
+    fi
+    PILLAR='{${SALT_MASTER_PILLAR} "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
 
     log_info "State: salt.master.env"
     if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env pillar="$PILLAR"; then
