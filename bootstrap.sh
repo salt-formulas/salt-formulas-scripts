@@ -593,7 +593,7 @@ saltmaster_bootstrap() {
 
     if [[ $RECLASS_VERSION =~ ^(dev|devel|master)$ ]]; then
       log_warn "Install development version of reclass"
-      install_reclass ${RECLASS_VERSION/dev*/master}
+      install_reclass ${RECLASS_VERSION/dev*/develop}
     fi
 
     log_info "Re/starting salt services"
