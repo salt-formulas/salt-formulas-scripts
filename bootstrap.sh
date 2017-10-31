@@ -255,7 +255,11 @@ configure_salt_master()
   echo "Configuring salt-master ..."
 
   if [[ $RECLASS_IGNORE_CLASS_NOTFOUND =~ ^(True|true|1|yes)$ ]]; then
-    IGNORE_CLASS_NOTFOUND="ignore_class_notfound: True\n  ignore_class_regexp:\n  - 'service.*'"
+    read -d '' IGNORE_CLASS_NOTFOUND <<-EOF
+		  ignore_class_notfound: True
+		  ignore_class_regexp:
+		  - 'service.*'
+EOF
   fi
 
   # to force alternative reclass module path
