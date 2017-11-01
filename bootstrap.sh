@@ -299,7 +299,6 @@ EOF
 	pretty_print: True
 	output: yaml
 	inventory_base_uri: ${RECLASS_ROOT}
-	$(echo ${IGNORE_CLASS_NOTFOUND}|sed 's/^\s*//')
 EOF
 
   clone_reclass
