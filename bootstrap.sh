@@ -642,6 +642,7 @@ saltmaster_init() {
     # Revert temporary SaltMaster minimal configuration, if any
     pushd $RECLASS_ROOT
     if [ $(git diff --name-only nodes | sort | uniq | wc -l) -ge 1 ]; then
+      PILLAR='{"reclass":{"storage":{"data_source":{"engine":"local"}}} }'
       git status || true
       log_warn "Locally modified $RECLASS_ROOT/nodes found. (Possibly salt-master minimized setup from bootstrap.sh call)"
       log_info "Checkout HEAD state of $RECLASS_ROOT/nodes/*."
