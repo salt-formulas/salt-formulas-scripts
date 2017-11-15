@@ -387,7 +387,7 @@ install_reclass()
         # For dev/git/pip version...
         # Note: It replaces all local reclass versions on system
         for s in $(python -c "import site; print(' '.join(site.getsitepackages()))"); do
-          sudo -H pip install --upgrade --force-reinstall -I \
+          sudo -H pip install --install-option="--prefix=" --upgrade --force-reinstall -I \
             -t "$s" git+https://github.com/salt-formulas/reclass.git@${VERSION};
         done
         ;;
