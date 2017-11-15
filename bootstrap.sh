@@ -384,6 +384,7 @@ install_reclass()
         which reclass || $SUDO $PKGTOOL install -y reclass
         ;;
       *)
+        log_warn "Install development version of reclass"
         # For dev/git/pip version...
         # Note: It replaces all local reclass versions on system
         for s in $(python -c "import site; print(' '.join(site.getsitepackages()))"); do
@@ -594,10 +595,8 @@ saltmaster_bootstrap() {
         fi
     }
 
-    if [[ $RECLASS_VERSION =~ ^(dev|devel|develop|master)$ ]]; then
-      log_warn "Install development version of reclass"
-      install_reclass ${RECLASS_VERSION/dev*/develop}
-    fi
+    log_info "Install reclass"
+    install_reclass ${RECLASS_VERSION/dev*/develop}
 
     log_info "Re/starting salt services"
     $SUDO service salt-minion stop
