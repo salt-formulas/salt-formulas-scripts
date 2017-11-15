@@ -379,11 +379,19 @@ install_reclass()
 {
   VERSION=${1:-$RECLASS_VERSION}
   VERSION=${VERSION:-master}
-  # tries to replace all local version system version
-  for s in $(python -c "import site; print(' '.join(site.getsitepackages()))"); do
-    sudo -H pip install --upgrade --force-reinstall -I \
-    -t "$s" git+https://github.com/salt-formulas/reclass.git@${VERSION};
-  done
+  case ${VERSION} in
+      pkg|package)
+        which reclass || $SUDO $PKGTOOL install -y reclass
+        ;;
+      *)
+        # For dev/git/pip version...
+        # Note: It replaces all local reclass versions on system
+        for s in $(python -c "import site; print(' '.join(site.getsitepackages()))"); do
+          sudo -H pip install --upgrade --force-reinstall -I \
+            -t "$s" git+https://github.com/salt-formulas/reclass.git@${VERSION};
+        done
+        ;;
+  esac
 }
 
 install_salt_master_pkg()
@@ -397,12 +405,10 @@ install_salt_master_pkg()
     case $PLATFORM_FAMILY in
       debian)
           $SUDO apt-get install -y git
-	  which reclass || $SUDO apt install -qqq -y reclass
           curl -L https://bootstrap.saltstack.com | $SUDO sh -s -- -M ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
         ;;
       rhel)
           yum install -y git
-          which reclass || $SUDO yum install -y reclass
           curl -L https://bootstrap.saltstack.com | $SUDO sh -s -- -M ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
         ;;
     esac
@@ -427,11 +433,9 @@ install_salt_master_pip()
     case $PLATFORM_FAMILY in
       debian)
           $SUDO apt-get install -y python-pip python-dev zlib1g-dev git
-	  which reclass || $SUDO apt-get install -y reclass
         ;;
       rhel)
 	  $SUDO yum install -y git
-	  which reclass || $SUDO yum install -y reclass
         ;;
     esac
 
@@ -590,7 +594,7 @@ saltmaster_bootstrap() {
         fi
     }
 
-    if [[ $RECLASS_VERSION =~ ^(dev|devel|master)$ ]]; then
+    if [[ $RECLASS_VERSION =~ ^(dev|devel|develop|master)$ ]]; then
       log_warn "Install development version of reclass"
       install_reclass ${RECLASS_VERSION/dev*/develop}
     fi
