@@ -378,7 +378,7 @@ configure_salt_minion()
 install_reclass()
 {
   VERSION=${1:-$RECLASS_VERSION}
-  VERSION=${VERSION:-master}
+  VERSION=${VERSION:-pkg}
   case ${VERSION} in
       pkg|package)
         which reclass || $SUDO $PKGTOOL install -y reclass
