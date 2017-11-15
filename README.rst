@@ -18,6 +18,7 @@ Script with function library to
 * validate reclass the model / pillar for all nodes
 
 TL;DR:
+======
 
 Bootstrap salt-minion:
 
@@ -31,6 +32,43 @@ Bootstrap salt-minion:
   install_salt_minion_pkg
 
 
+Common procedure
+================
+
+Download the deploy scripts to the ``/srv/salt/scripts`` directory:
+
+   .. code-block:: bash
+
+      git clone https://github.com/salt-formulas/salt-formulas-scripts /srv/salt/scripts
+
+Install reclass (optional):
+
+.. note:: For bootstrap you may wish to use the forked version with some nice features (as ignore_class_notfound) from
+          master or develop branch of https://github.com/salt-formulas/reclass.
+
+.. code-block:: bash
+
+  RECLASS_VERSION=dev
+  cd /srv/salt/scripts
+  source /srv/salt/scripts.bootstrap.sh
+  install_reclass
+
+.. note:: To ignore missing classes on bootstrap export the following variables
+          ``export RECLASS_IGNORE_CLASS_NOTFOUND=True; export RECLASS_IGNORE_CLASS_REGEXP="service.*"``
+
+If you are not using forked reclass (with ingnore_class_notfound option enabled) you have to set
+environment variable FORMULAS_SALT_MASTER containing list of all formulas required on salt master.
+For example you may require to pre-install the following:
+
+.. code-block:: bash
+
+  export FORMULAS_SALT_MASTER="linux salt reclass maas memcached openssh ntp  sphinx \
+    grafana libvirt rsyslog glusterfs postfix xtrabackup freeipa prometheus telegraf \
+    elasticsearch kibana rundeck devops-portal rsync docker keepalived aptly jenkins \
+    gerrit artifactory influxdb horizon nginx collectd heka mysql"
+
+
+Run the ``bootstrap.sh`` script from ``/srv/salt/scripts`` with the ``MASTER_HOSTNAME=$SALT_MASTER_FQDN`` parameter to
 Bootstrap salt-master:
 
 .. code-block:: bash
@@ -38,21 +76,8 @@ Bootstrap salt-master:
   cd /srv/salt/scripts
   CLUSTER_NAME=regionOne HOSTNAME=cfg01 DOMAIN=infra.ci.local ./bootstrap.sh
 
-.. note:
-  Creates /srv/salt/scripts/.salt-master-setup.sh.passed if succesfully passed the "setup script" 
-  with the aim to avoid subsequent setup.
-
-
-**salt-master-setup.sh** (DEPRECATED, use bootstrap.sh instead)
-
-Script to install and configure salt *minion* but mostly *salt master* with *salt-formulas* common prerequisites in mind.
-Configuration driven by environment variables, see source for more details...
-
-
-**salt-master-init.sh** (DEPRECATED, use bootstrap.sh instead)
-
-Script to bootstrap *salt master* and verify the model. To install salt master uses ``salt-master-setup.sh``.
-Configuration driven by environment variables.
+.. note:: Creates /srv/salt/scripts/.salt-master-setup.sh.passed if succesfully passed the "setup script"
+          with the aim to avoid subsequent setup.
 
 
 **formula-fetch.sh**
@@ -108,6 +133,7 @@ Additional bootstrap ENV variables
 
     # reclass
     export RECLASS_ADDRESS=<repo url>   ## if not already cloned in /srv/salt/reclass >
+    export RECLASS_VERSION=dev
 
     # formula
     export FORMULAS_BRANCH=master
@@ -132,7 +158,8 @@ Additional bootstrap ENV variables
     export CLUSTER_NAME=<%= cluster %>
     
     # workarounds
-    export RECLASS_IGNORE_CLASS_NOTFOUND=False
+    export RECLASS_IGNORE_CLASS_NOTFOUND=True
+    export RECLASS_IGNORE_CLASS_REGEXP="service.*"
     export EXTRA_FORMULAS="prometheus telegraph"
 
   
