@@ -635,15 +635,15 @@ saltmaster_init() {
     fi
     PILLAR='{'${SALT_MASTER_PILLAR}' "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
 
-    log_info "State: salt.master.env"
-    if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env pillar="$PILLAR"; then
-      log_err "State salt.master.env failed, keep your eyes wide open."
+    log_info "State: salt.master.env,salt.master.pillar"
+    if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env,salt.master.pillar pillar="$PILLAR"; then
+      log_err "State salt.master.(env|pillar) failed, keep your eyes wide open."
     fi
 
-    log_info "State: salt.master.pillar"
-    retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.pillar pillar="$PILLAR"
-    # Note: sikp reclass data dir states
-    #       in order to avoid pull from configured repo/branch
+    #log_info "State: salt.master.pillar"
+    #retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.pillar pillar="$PILLAR"
+    ## Note: sikp reclass data dir states
+    ##       in order to avoid pull from configured repo/branch
 
     # Revert temporary SaltMaster minimal configuration, if any
     pushd $RECLASS_ROOT
