@@ -625,7 +625,7 @@ saltmaster_init() {
     if [[ $RECLASS_IGNORE_CLASS_NOTFOUND =~ ^(True|true|1|yes)$ ]]; then
       SALT_MASTER_PILLAR='"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": "'${RECLASS_IGNORE_CLASS_NOTFOUND:-False}'", "ignore_class_regexp": ["service.*"]}}}},'
     fi
-    PILLAR=\'{'${SALT_MASTER_PILLAR}' "reclass":{"storage":{"data_source":{"engine":"local"}}} }'\'
+    PILLAR=\''{'${SALT_MASTER_PILLAR}' "reclass":{"storage":{"data_source":{"engine":"local"}}} }'\'
 
     log_info "State: salt.master.env,salt.master.pillar"
     if ! retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar=$PILLAR; then
