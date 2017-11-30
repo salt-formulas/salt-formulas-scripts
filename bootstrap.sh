@@ -628,8 +628,8 @@ saltmaster_init() {
     PILLAR='{'${SALT_MASTER_PILLAR}' "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
 
     log_info "State: salt.master.env,salt.master.pillar"
-    if ! retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar=\'${PILLAR}\'; then
-      log_err "State `salt.master.env,salt.master.pillar pillar=\'${PILLAR}\'` failed, keep your eyes wide open!"
+    if ! retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar=${PILLAR}; then
+      log_err "State `salt.master.env,salt.master.pillar pillar=${PILLAR}` failed, keep your eyes wide open!"
     fi
 
     # Revert temporary SaltMaster minimal configuration, if any
@@ -642,8 +642,8 @@ saltmaster_init() {
       git checkout -- $RECLASS_ROOT/nodes || true
       log_info "Re-Run states: salt.master.env and salt.master.pillar according the HEAD state."
       log_info "State: salt.master.env,salt.master.pillar"
-      if ! retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar=\'${PILLAR}\'; then
-        log_err "State `salt.master.env,salt.master.pillar pillar=\'${PILLAR}\'` failed, keep your eyes wide open."
+      if ! retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar=${PILLAR}; then
+        log_err "State `salt.master.env,salt.master.pillar pillar=${PILLAR}` failed, keep your eyes wide open."
       fi
     fi
     popd
