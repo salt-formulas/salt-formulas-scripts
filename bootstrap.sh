@@ -511,7 +511,7 @@ install_salt_formula_pkg()
 
           [ ! -d ${RECLASS_ROOT}/classes/service ] && mkdir -p ${RECLASS_ROOT}/classes/service
           # Set essentials if FORMULAS_SALT_MASTER is not defined at all
-          [ -z ${FORMULAS_SALT_MASTER+x} ] && declare -a FORMULAS_SALT_MASTER=("linux" "reclass" "salt" "memcached")
+          [ -z ${FORMULAS_SALT_MASTER} ] && declare -a FORMULAS_SALT_MASTER=("linux" "reclass" "salt" "memcached")
           for formula_service in "${FORMULAS_SALT_MASTER[@]}"; do
               echo -e "\nConfiguring salt formula ${formula_service} ...\n"
               [ ! -d "${FORMULAS_PATH}/env/${formula_service}" ] && \
@@ -538,7 +538,7 @@ install_salt_formula_git()
 
     [ ! -d ${RECLASS_ROOT}/classes/service ] && mkdir -p ${RECLASS_ROOT}/classes/service
     # Set essentials if FORMULAS_SALT_MASTER is not defined at all
-    [ -z ${FORMULAS_SALT_MASTER+x} ] && declare -a FORMULAS_SALT_MASTER=("linux" "reclass" "salt" "memcached")
+    [ -z ${FORMULAS_SALT_MASTER} ] && declare -a FORMULAS_SALT_MASTER=("linux" "reclass" "salt" "memcached")
     for formula_service in "${FORMULAS_SALT_MASTER[@]}"; do
         echo -e "\nConfiguring salt formula ${formula_service} ...\n"
         _BRANCH=${FORMULAS_BRANCH}
