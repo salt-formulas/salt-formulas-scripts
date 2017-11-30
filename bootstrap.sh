@@ -621,14 +621,6 @@ saltmaster_init() {
     set -e
     $SUDO salt-call saltutil.sync_all >/dev/null
 
-    # TODO: Placeholder update saltmaster spec (nodes/FQDN.yml) to be able to bootstrap with minimal configuration
-    # (ie: with linux, git, salt formulas)
-
-    #log_info "Verify SaltMaster, before salt-master is fully initialized"
-    #if ! $SUDO reclass-salt -p ${MASTER_HOSTNAME} &> /tmp/${MASTER_HOSTNAME}.pillar;then
-    #   log_warn "Node verification before initialization failed."; cat /tmp/${MASTER_HOSTNAME}.pillar;
-    #fi
-
     # workarond isolated and not fully bootstraped environments
     if [[ $RECLASS_IGNORE_CLASS_NOTFOUND =~ ^(True|true|1|yes)$ ]]; then
       SALT_MASTER_PILLAR='"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": "'${RECLASS_IGNORE_CLASS_NOTFOUND:-False}'", "ignore_class_regexp": ["service.*"]}}}},'
@@ -636,14 +628,9 @@ saltmaster_init() {
     PILLAR='{'${SALT_MASTER_PILLAR}' "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
 
     log_info "State: salt.master.env,salt.master.pillar"
-    if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env,salt.master.pillar pillar="$PILLAR"; then
-      log_err "State salt.master.(env|pillar) failed, keep your eyes wide open."
+    if ! retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar=\'${PILLAR}\'; then
+      log_err "State `salt.master.env,salt.master.pillar pillar=\'${PILLAR}\'` failed, keep your eyes wide open!"
     fi
-
-    #log_info "State: salt.master.pillar"
-    #retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.pillar pillar="$PILLAR"
-    ## Note: sikp reclass data dir states
-    ##       in order to avoid pull from configured repo/branch
 
     # Revert temporary SaltMaster minimal configuration, if any
     pushd $RECLASS_ROOT
@@ -654,12 +641,10 @@ saltmaster_init() {
       log_info "Checkout HEAD state of $RECLASS_ROOT/nodes/*."
       git checkout -- $RECLASS_ROOT/nodes || true
       log_info "Re-Run states: salt.master.env and salt.master.pillar according the HEAD state."
-      log_info "State: salt.master.env"
-      if ! $SUDO salt-call ${SALT_OPTS} -linfo state.apply salt.master.env pillar="$PILLAR"; then
-        log_err "State salt.master.env failed, keep your eyes wide open."
+      log_info "State: salt.master.env,salt.master.pillar"
+      if ! retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar=\'${PILLAR}\'; then
+        log_err "State `salt.master.env,salt.master.pillar pillar=\'${PILLAR}\'` failed, keep your eyes wide open."
       fi
-      log_info "State: salt.master.pillar"
-      retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.pillar pillar="$PILLAR"
     fi
     popd
 
@@ -669,7 +654,8 @@ saltmaster_init() {
 
     log_info "State: salt.master.storage.node"
     set +e
-    # TODO: PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
+    # TODO:  PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
+    # FIXME: PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
     retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply reclass.storage.node
     ret=$?
     set -e
@@ -717,6 +703,7 @@ function verify_salt_master() {
         log_err "For more details see full log /tmp/${MASTER_HOSTNAME}.reclass.nodeinfo"
         exit 1
     fi
+    set +e
 }
 
 function verify_salt_minion() {
@@ -733,6 +720,7 @@ function verify_salt_minion() {
         exit 1
       fi
   fi
+  set +e
 }
 
 function verify_salt_minions() {
@@ -768,6 +756,7 @@ function verify_salt_minions() {
       tail -n50 /tmp/*.pillar_verify
       return 1
     }
+    #set +e
 }
 
 
