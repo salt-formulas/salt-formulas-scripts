@@ -54,6 +54,7 @@ export APT_REPOSITORY_GPG=${APT_REPOSITORY_GPG:-http://apt.mirantis.com/public.g
 
 # reclass
 export RECLASS_ADDRESS=${RECLASS_ADDRESS:-https://github.com/salt-formulas/openstack-salt.git} # https/git
+export RECLASS_BRANCH=${RECLASS_BRANCH:-master}
 
 # formula
 export FORMULAS_BASE=${FORMULAS_BASE:-https://github.com/salt-formulas}
@@ -187,13 +188,14 @@ function clone_reclass() {
   if [ ! -d ${RECLASS_ROOT}/classes ]; then
     # No reclass at all, clone from given address
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
-    if echo ${RECLASS_BRANCH:-master} | egrep -q "^refs"; then		
-        git clone ${RECLASS_ADDRESS} ${RECLASS_ROOT}		
-        cd ${RECLASS_ROOT}		
-        git fetch ${RECLASS_ADDRESS} ${RECLASS_BRANCH:-master} && git checkout FETCH_HEAD		
-        cd -		
-    else		
-        git clone -b ${RECLASS_BRANCH:-master} ${RECLASS_ADDRESS} ${RECLASS_ROOT};		
+    if echo ${RECLASS_BRANCH} | egrep -q "^refs"; then
+        git clone ${RECLASS_ADDRESS} ${RECLASS_ROOT}
+        cd ${RECLASS_ROOT}
+        git fetch ${RECLASS_ADDRESS} ${RECLASS_BRANCH} && git checkout FETCH_HEAD
+        export RECLASS_REVISION=$(git rev-parse HEAD)
+        cd -
+    else
+        git clone -b ${RECLASS_BRANCH} ${RECLASS_ADDRESS} ${RECLASS_ROOT};
     fi;
   fi;
   if [ ! -d ${RECLASS_ROOT}/classes ]; then
@@ -328,7 +330,7 @@ EOF
 	    salt_master_host: ${MASTER_IP:-$MASTER_HOSTNAME}
 	    salt_master_base_environment: $SALT_ENV
 	    salt_formula_branch: ${SALT_FORMULAS_BRANCH:-master}
-	    reclass_data_revision: ${RECLASS_BRANCH:-master}
+	    reclass_data_revision: ${RECLASS_REVISION:-$RECLASS_BRANCH}
 	    reclass_data_repository: "$RECLASS_ADDRESS"
 	    reclass_config_master: ${MASTER_IP:-$MASTER_HOSTNAME}
 	    linux_system_codename: ${DISTRIB_CODENAME}
