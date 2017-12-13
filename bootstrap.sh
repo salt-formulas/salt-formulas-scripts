@@ -581,7 +581,7 @@ saltmaster_bootstrap() {
 
     pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {} || true
     pkill -9 salt-minion
-    SCRIPTS=$(dirname $0)
+    SCRIPTS=${SCRIPTS:-/srv/salt/scripts}
     
     test -e ${SCRIPTS}/.salt-master-setup.sh.passed || {
         export MASTER_IP=${MASTER_IP:-127.0.0.1}
