@@ -569,20 +569,38 @@ install_salt_formula_git()
     [ ! -L /srv/salt/env/dev ] && ln -s /usr/share/salt-formulas/env /srv/salt/env/dev || echo ""
 }
 
+saltservice_stop() {
+    $SUDO service salt-minion stop
+    $SUDO service salt-master stop
+    sleep ${SALT_STOPSTART_WAIT:-30}
+    ${SUDO} pkill -9 -f /usr/bin/salt-master && ${SUDO} rm -rf /var/run/salt/master/* || true
+    ${SUDO} pkill -9 salt-minion
+}
+saltservice_start() {
+    $SUDO service salt-master start
+    $SUDO service salt-minion start
+    sleep ${SALT_STOPSTART_WAIT:-30}
+}
+
+saltservice_restart() {
+  saltservice_stop
+  saltservice_start
+}
 
 saltmaster_bootstrap() {
 
     log_info "Salt master setup"
     test -n "$MASTER_HOSTNAME" || exit 1
 
-    clone_reclass
     # override some envs from cluster level *.env, use with care
     source_local_envs
 
-    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {} || true
-    pkill -9 salt-minion
+    saltservice_stop
+
+    clone_reclass
+
     SCRIPTS=$(dirname $0)
-    
+
     test -e ${SCRIPTS}/.salt-master-setup.sh.passed || {
         export MASTER_IP=${MASTER_IP:-127.0.0.1}
         export MINION_ID=${MASTER_HOSTNAME}
@@ -604,14 +622,7 @@ saltmaster_bootstrap() {
     install_reclass ${RECLASS_VERSION/dev*/develop}
 
     log_info "Re/starting salt services"
-    $SUDO service salt-minion stop
-    $SUDO service salt-master stop
-    sleep 10
-    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {} || true
-    pkill -9 salt-minion
-    $SUDO service salt-master start
-    $SUDO service salt-minion start
-    sleep 15
+    saltservice_restart
 }
 
 # Init salt master
@@ -671,13 +682,7 @@ saltmaster_init() {
 
     log_info "Re/starting salt services"
     $SUDO sed -i 's/^master:.*/master: localhost/' /etc/salt/minion.d/minion.conf
-    $SUDO service salt-minion stop
-    $SUDO service salt-master stop
-    sleep 10
-    pgrep salt-master | sed /$$/d | xargs --no-run-if-empty -i{} $SUDO kill -9 {} || true
-    $SUDO service salt-master start
-    $SUDO service salt-minion start
-    sleep 15
+    saltservice_restart
     $SUDO salt-call ${SALT_OPTS} saltutil.sync_all >/dev/null
 
     verify_salt_master
