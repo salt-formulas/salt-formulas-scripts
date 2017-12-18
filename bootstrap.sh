@@ -570,6 +570,7 @@ install_salt_formula_git()
 }
 
 saltservice_stop() {
+    set +e
     $SUDO service salt-minion stop
     $SUDO service salt-master stop
     sleep ${SALT_STOPSTART_WAIT:-30}
@@ -577,12 +578,14 @@ saltservice_stop() {
     ${SUDO} pkill -9 salt-minion
 }
 saltservice_start() {
+    set +e
     $SUDO service salt-master start
     $SUDO service salt-minion start
     sleep ${SALT_STOPSTART_WAIT:-30}
 }
 
 saltservice_restart() {
+  set +e
   saltservice_stop
   saltservice_start
 }
@@ -671,8 +674,8 @@ saltmaster_init() {
     # FIXME: PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
     retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply reclass.storage.node
     ret=$?
-    set -e
 
+    set -e
     if [[ $ret -eq 2 ]]; then
         log_err "State reclass.storage.node failed with exit code 2 but continuing."
     elif [[ $ret -ne 0 ]]; then
@@ -680,13 +683,17 @@ saltmaster_init() {
         exit 1
     fi
 
-    log_info "Re/starting salt services"
+    set +e
+    log_info "Updating minion.conf -> master: localhost"
     $SUDO sed -i 's/^master:.*/master: localhost/' /etc/salt/minion.d/minion.conf
+
+    log_info "Re/starting salt services" # in order to load new deployed configuration from model
     saltservice_restart
+
+    log_info "Salt Util sync all"
     $SUDO salt-call ${SALT_OPTS} saltutil.sync_all >/dev/null
 
     verify_salt_master
-    set +e
 
 }
 
