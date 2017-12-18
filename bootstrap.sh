@@ -574,7 +574,7 @@ saltservice_stop() {
     $SUDO service salt-master stop
     sleep ${SALT_STOPSTART_WAIT:-30}
     ${SUDO} pkill -9 salt-master && ${SUDO} rm -rf /var/run/salt/master/* || true
-    ${SUDO} pkill -9 salt-minion
+    ${SUDO} pkill -9 salt-minion || true
 }
 saltservice_start() {
     $SUDO service salt-master start
