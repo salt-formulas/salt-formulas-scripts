@@ -667,6 +667,7 @@ saltmaster_init() {
     # finally re-configure salt master conf, ie: may remove ignore_class_notfound option
     log_info "State: salt.master.service"
     retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.service || true
+    saltservice_start
 
     log_info "State: salt.master.storage.node"
     set +e
