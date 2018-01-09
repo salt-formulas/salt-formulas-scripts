@@ -85,8 +85,6 @@ BOOTSTRAP_SALTSTACK_VERSION=${BOOTSTRAP_SALTSTACK_VERSION//latest*/stable}
 # local one should be used, from http://apt.mirantis.com/ or whatever.
 BOOTSTRAP_SALTSTACK_OPTS=${BOOTSTRAP_SALTSTACK_OPTS:- -dX $BOOTSTRAP_SALTSTACK_VERSION }
 SALT_SOURCE=${SALT_SOURCE:-pkg}
-# the version below is used salt pillar data
-SALT_VERSION=${SALT_VERSION:-latest}
 
 # SECURITY
 SSH_STRICTHOSTKEYCHECKING=no
@@ -360,23 +358,15 @@ EOF
 	# ########
 EOF
 
-    if [ "$SALT_VERSION" == "latest" ]; then
-      VERSION=""
-    else
-      VERSION="version: $SALT_VERSION"
-    fi
-
     cat <<-EOF >> ${CONFIG}
 		  salt:
 		    master:
 		      accept_policy: open_mode
 		      source:
 		        engine: $SALT_SOURCE
-		        $VERSION
 		    minion:
 		      source:
 		        engine: $SALT_SOURCE
-		        $VERSION
 		# ########
 		# vim: ft=yaml sw=2 ts=2 sts=2
 EOF
@@ -464,10 +454,10 @@ install_salt_master_pip()
     echo -e "\nInstalling salt master ...\n"
     # TODO: replace with saltstack bootstrap script
 
-    if [ "$SALT_VERSION" == "latest" ]; then
+    if [ -z ${PIP_SALT_VERSION} ] || [ "$PIP_SALT_VERSION" == "latest" ]; then
       pip install salt
     else
-      pip install salt==$SALT_VERSION
+      pip install salt==${PIP_SALT_VERSION}
     fi
 
     curl -Lo /etc/init.d/salt-master https://anonscm.debian.org/cgit/pkg-salt/salt.git/plain/debian/salt-master.init && chmod 755 /etc/init.d/salt-master
