@@ -81,6 +81,7 @@ export MASTER_HOSTNAME=${MASTER_HOSTNAME:-${HOSTNAME}.${DOMAIN}}
 # saltstack
 BOOTSTRAP_SALTSTACK=${BOOTSTRAP_SALTSTACK:-True}
 BOOTSTRAP_SALTSTACK_VERSION=${BOOTSTRAP_SALTSTACK_VERSION:- stable 2016.3 }
+BOOTSTRAP_SALTSTACK_VERSION=${BOOTSTRAP_SALTSTACK_VERSION//latest*/stable}
 BOOTSTRAP_SALTSTACK_OPTS=${BOOTSTRAP_SALTSTACK_OPTS:- -dX $BOOTSTRAP_SALTSTACK_VERSION }
 SALT_SOURCE=${SALT_SOURCE:-pkg}
 # the version below is used salt pillar data
@@ -418,7 +419,7 @@ install_salt_master_pkg()
           curl -L https://bootstrap.saltstack.com | $SUDO sh -s -- -M ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
         ;;
     esac
-    
+
     which reclass-salt || {
       test -e /usr/share/reclass/reclass-salt && {
         ln -fs /usr/share/reclass/reclass-salt /usr/bin
@@ -447,7 +448,7 @@ install_salt_master_pip()
 
     echo -e "\nInstalling salt master ...\n"
     # TODO: replace with saltstack bootstrap script
-    
+
     if [ "$SALT_VERSION" == "latest" ]; then
       pip install salt
     else
