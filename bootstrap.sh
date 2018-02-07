@@ -43,7 +43,7 @@ export LC_ALL=C
 export SALT_LOG_LEVEL="--state-verbose=false -lerror"
 export SALT_OPTS="${SALT_OPTS:- --timeout=120 --state-output=changes --retcode-passthrough --force-color $SALT_LOG_LEVEL }"
 export SALT_STATE_RETRY=${SALT_STATE_RETRY:-3}
-
+export SALT_MASTER_PILLAR_BACKEND=${SALT_MASTER_PILLAR_BACKEND:-reclass}
 
 # salt apt repository
 test -e /etc/lsb-release && eval $(cat /etc/lsb-release)
@@ -51,6 +51,10 @@ which lsb_release && DISTRIB_CODENAME=${DISTRIB_CODENAME:-$(lsb_release -cs)}
 #
 export APT_REPOSITORY=${APT_REPOSITORY:- deb [arch=amd64] http://apt.mirantis.com/${DISTRIB_CODENAME} ${DISTRIB_REVISION:-stable} salt}
 export APT_REPOSITORY_GPG=${APT_REPOSITORY_GPG:-http://apt.mirantis.com/public.gpg}
+
+# architect
+$ARCHITECT_PROJECT=${ARCHITECT_PROJECT:-default}
+$ARCHITECT_HOST=${ARCHITECT_HOST:-localhost}
 
 # reclass
 export RECLASS_ADDRESS=${RECLASS_ADDRESS:-https://github.com/salt-formulas/openstack-salt.git} # https/git
@@ -253,7 +257,7 @@ system_config_master() {
     }
 }
 
-configure_salt_master()
+configure_salt_master_reclass()
 {
 
   echo "Configuring salt-master ..."
@@ -401,13 +405,26 @@ install_reclass()
   esac
 }
 
+install_architect()
+{
+    echo -e "\nInstalling Salt Architect pillar backend ...\n"
+    pip install architect-client
+    mkdir /etc/architect
+    cat <<-EOF >> /etc/architect/client.yml
+project: $ARCHITECT_PROJECT
+host: $ARCHITECT_HOST
+port: 8181
+EOF
+
+}
+
 install_salt_master_pkg()
 {
     echo -e "\nPreparing base OS repository ...\n"
 
     configure_pkg_repo
 
-    echo -e "\nInstalling salt master ...\n"
+    echo -e "\nInstalling Salt master ...\n"
 
     case $PLATFORM_FAMILY in
       debian)
@@ -623,7 +640,14 @@ saltmaster_bootstrap() {
     }
 
     log_info "Install reclass"
-    install_reclass ${RECLASS_VERSION/dev*/develop}
+
+    if [ "$SALT_MASTER_PILLAR_BACKEND" = "reclass" ] ; then
+        install_reclass ${RECLASS_VERSION/dev*/develop}
+    fi
+
+    if [ "$SALT_MASTER_PILLAR_BACKEND" = "architect" ] ; then
+       install_architect
+    fi
 
     log_info "Re/starting salt services"
     saltservice_restart
@@ -638,32 +662,36 @@ saltmaster_init() {
     set -e
     $SUDO salt-call saltutil.sync_all >/dev/null
 
-    # workarond isolated and not fully bootstraped environments
-    if [[ $RECLASS_IGNORE_CLASS_NOTFOUND =~ ^(True|true|1|yes)$ ]]; then
-      SALT_MASTER_PILLAR='"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": '${RECLASS_IGNORE_CLASS_NOTFOUND:-False}', "ignore_class_regexp": ["service.*"]}}}},'
-    fi
-    PILLAR='{'${SALT_MASTER_PILLAR}' "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
+    if [ "$SALT_MASTER_PILLAR_BACKEND" = "reclass" ] ; then
 
-    log_info "State: salt.master.env,salt.master.pillar"
-    if ! $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar="$PILLAR"; then
-      log_err "State \`salt.master.env,salt.master.pillar pillar=$PILLAR\` failed, keep your eyes wide open!"
-    fi
+      # workarond isolated and not fully bootstraped environments
+      if [[ $RECLASS_IGNORE_CLASS_NOTFOUND =~ ^(True|true|1|yes)$ ]]; then
+        SALT_MASTER_PILLAR='"salt":{"master":{"pillar":{"reclass":{"ignore_class_notfound": '${RECLASS_IGNORE_CLASS_NOTFOUND:-False}', "ignore_class_regexp": ["service.*"]}}}},'
+      fi
+      PILLAR='{'${SALT_MASTER_PILLAR}' "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
 
-    # Revert temporary SaltMaster minimal configuration, if any
-    pushd $RECLASS_ROOT
-    if [ $(git diff --name-only nodes | sort | uniq | wc -l) -ge 1 ]; then
-      PILLAR='{"reclass":{"storage":{"data_source":{"engine":"local"}}} }'
-      git status || true
-      log_warn "Locally modified $RECLASS_ROOT/nodes found. (Possibly salt-master minimized setup from bootstrap.sh call)"
-      log_info "Checkout HEAD state of $RECLASS_ROOT/nodes/*."
-      git checkout -- $RECLASS_ROOT/nodes || true
-      log_info "Re-Run states: salt.master.env and salt.master.pillar according the HEAD state."
       log_info "State: salt.master.env,salt.master.pillar"
       if ! $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar="$PILLAR"; then
         log_err "State \`salt.master.env,salt.master.pillar pillar=$PILLAR\` failed, keep your eyes wide open!"
       fi
+
+      # Revert temporary SaltMaster minimal configuration, if any
+      pushd $RECLASS_ROOT
+      if [ $(git diff --name-only nodes | sort | uniq | wc -l) -ge 1 ]; then
+        PILLAR='{"reclass":{"storage":{"data_source":{"engine":"local"}}} }'
+        git status || true
+        log_warn "Locally modified $RECLASS_ROOT/nodes found. (Possibly salt-master minimized setup from bootstrap.sh call)"
+        log_info "Checkout HEAD state of $RECLASS_ROOT/nodes/*."
+        git checkout -- $RECLASS_ROOT/nodes || true
+        log_info "Re-Run states: salt.master.env and salt.master.pillar according the HEAD state."
+        log_info "State: salt.master.env,salt.master.pillar"
+        if ! $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar="$PILLAR"; then
+          log_err "State \`salt.master.env,salt.master.pillar pillar=$PILLAR\` failed, keep your eyes wide open!"
+        fi
+      fi
+      popd
+
     fi
-    popd
 
     # finally re-configure salt master conf, ie: may remove ignore_class_notfound option
     log_info "State: salt.master.service"
@@ -672,19 +700,23 @@ saltmaster_init() {
     retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply salt.master.service || true
     saltservice_start
 
-    log_info "State: salt.master.storage.node"
-    set +e
-    # TODO:  PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
-    # FIXME: PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
-    retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply reclass.storage.node
-    ret=$?
+    if [ "$SALT_MASTER_PILLAR_BACKEND" = "reclass" ] ; then
 
-    set -e
-    if [[ $ret -eq 2 ]]; then
-        log_err "State reclass.storage.node failed with exit code 2 but continuing."
-    elif [[ $ret -ne 0 ]]; then
-        log_err "State reclass.storage.node failed with exit code $ret"
-        exit 1
+      log_info "State: salt.master.storage.node"
+      set +e
+      # TODO:  PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
+      # FIXME: PLACEHOLDER TO TRIGGER NODE GENERATION THROUG SALT REACT.
+      retry ${SALT_STATE_RETRY} $SUDO salt-call ${SALT_OPTS} state.apply reclass.storage.node
+      ret=$?
+
+      set -e
+      if [[ $ret -eq 2 ]]; then
+          log_err "State reclass.storage.node failed with exit code 2 but continuing."
+      elif [[ $ret -ne 0 ]]; then
+          log_err "State reclass.storage.node failed with exit code $ret"
+          exit 1
+      fi
+
     fi
 
     set +e
