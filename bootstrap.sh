@@ -44,14 +44,12 @@ export SALT_LOG_LEVEL="--state-verbose=false -lerror"
 export SALT_OPTS="${SALT_OPTS:- --timeout=120 --state-output=changes --retcode-passthrough --force-color $SALT_LOG_LEVEL }"
 export SALT_STATE_RETRY=${SALT_STATE_RETRY:-3}
 
-
 # salt apt repository
 test -e /etc/lsb-release && eval $(cat /etc/lsb-release)
 which lsb_release && DISTRIB_CODENAME=${DISTRIB_CODENAME:-$(lsb_release -cs)}
 #
 export APT_REPOSITORY=${APT_REPOSITORY:- deb [arch=amd64] http://apt.mirantis.com/${DISTRIB_CODENAME} ${DISTRIB_REVISION:-stable} salt}
 export APT_REPOSITORY_GPG=${APT_REPOSITORY_GPG:-http://apt.mirantis.com/public.gpg}
-
 # reclass
 export RECLASS_ADDRESS=${RECLASS_ADDRESS:-https://github.com/salt-formulas/openstack-salt.git} # https/git
 export RECLASS_BRANCH=${RECLASS_BRANCH:-master}
@@ -80,8 +78,12 @@ export MASTER_HOSTNAME=${MASTER_HOSTNAME:-${HOSTNAME}.${DOMAIN}}
 
 # saltstack
 BOOTSTRAP_SALTSTACK=${BOOTSTRAP_SALTSTACK:-True}
+BOOTSTRAP_SALTSTACK_COM=${BOOTSTRAP_SALTSTACK_COM:-"https://bootstrap.saltstack.com"}
 BOOTSTRAP_SALTSTACK_VERSION=${BOOTSTRAP_SALTSTACK_VERSION:- stable 2016.3 }
 BOOTSTRAP_SALTSTACK_VERSION=${BOOTSTRAP_SALTSTACK_VERSION//latest*/stable}
+# TODO add 'r' option by default
+# Currently, without 'r' option, upstream saltstack repos will be used. Otherwise
+# local one should be used, from http://apt.mirantis.com/ or whatever.
 BOOTSTRAP_SALTSTACK_OPTS=${BOOTSTRAP_SALTSTACK_OPTS:- -dX $BOOTSTRAP_SALTSTACK_VERSION }
 SALT_SOURCE=${SALT_SOURCE:-pkg}
 # the version below is used salt pillar data
@@ -188,7 +190,11 @@ retry() {
 function clone_reclass() {
   if [ ! -d ${RECLASS_ROOT}/classes ]; then
     # No reclass at all, clone from given address
-    ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
+    # In case, non-github repo
+    _tmp_host=$(echo ${RECLASS_ADDRESS} | awk -F/ '{print $3}')
+    ssh-keyscan -T 1 -H ${_tmp_host} >> ~/.ssh/known_hosts || true
+    # But, awk is not perfect solution, so lets make double-check for github
+    ssh-keyscan -T 1 -H github.com >> ~/.ssh/known_hosts || true
     if echo ${RECLASS_BRANCH} | egrep -q "^refs"; then
         git clone ${RECLASS_ADDRESS} ${RECLASS_ROOT}
         cd ${RECLASS_ROOT}
@@ -412,11 +418,11 @@ install_salt_master_pkg()
     case $PLATFORM_FAMILY in
       debian)
           $SUDO apt-get install -y git
-          curl -L https://bootstrap.saltstack.com | $SUDO sh -s -- -M ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
+          curl -L ${BOOTSTRAP_SALTSTACK_COM} | $SUDO sh -s -- -M ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
         ;;
       rhel)
           yum install -y git
-          curl -L https://bootstrap.saltstack.com | $SUDO sh -s -- -M ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
+          curl -L ${BOOTSTRAP_SALTSTACK_COM} | $SUDO sh -s -- -M ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
         ;;
     esac
 
@@ -480,10 +486,10 @@ install_salt_minion_pkg()
 
     case $PLATFORM_FAMILY in
       debian)
-          curl -L https://bootstrap.saltstack.com | $SUDO sh -s -- ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
+          curl -L ${BOOTSTRAP_SALTSTACK_COM} | $SUDO sh -s -- ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
       ;;
       rhel)
-          curl -L https://bootstrap.saltstack.com | $SUDO sh -s -- ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
+          curl -L ${BOOTSTRAP_SALTSTACK_COM} | $SUDO sh -s -- ${BOOTSTRAP_SALTSTACK_OPTS} &>/dev/null || true
       ;;
     esac
 
