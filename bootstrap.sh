@@ -249,9 +249,8 @@ system_config_master() {
     if ! grep '127.0.1.2.*salt' /etc/hosts; then
       echo "127.0.1.2  salt" | $SUDO tee -a /etc/hosts >/dev/null
     fi
-
-    which reclass || $SUDO $PKGTOOL install -y reclass
-
+    
+    # DEPRECATED, should be removed or moved to salt master specific function
     which reclass-salt || {
       test -e /usr/share/reclass/reclass-salt && {
         ln -fs /usr/share/reclass/reclass-salt /usr/bin
