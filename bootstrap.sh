@@ -267,7 +267,6 @@ system_config_master() {
     if ! grep '127.0.1.2.*salt' /etc/hosts; then
       echo "127.0.1.2  salt" | $SUDO tee -a /etc/hosts >/dev/null
     fi
-    
 }
 
 configure_salt_master()
