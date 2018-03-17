@@ -6,10 +6,9 @@
 # - http://github.com/salt-formulas-scripts
 # - http://github.com/salt-formulas/salt-formula-salt (salt.master sls)
 
-# TODO:
-# - use PPA repository as formula source
-# - support for spm/yum
-
+# NOTE: This script is collection of shared functions to automate bootstrap of "salted" CI environments.
+#       Its not intended to be used in PRODUCTION unless you know what you are doing.
+#       You have been warned!
 
 # Source specific env vars.
 # shopt -u dotglob
@@ -88,6 +87,9 @@ BOOTSTRAP_SALTSTACK_OPTS=${BOOTSTRAP_SALTSTACK_OPTS:- -dX $BOOTSTRAP_SALTSTACK_V
 SALT_SOURCE=${SALT_SOURCE:-pkg}
 # the version below is used salt pillar data
 SALT_VERSION=${SALT_VERSION:-latest}
+
+# SECURITY
+SSH_STRICTHOSTKEYCHECKING=no
 
 # environment
 if [ "$FORMULAS_SOURCE" == "git" ]; then
@@ -218,17 +220,33 @@ function clone_reclass() {
 ##########################################
 # Main calls
 
-system_config_ssh_conf() {
-    for conf in ~/.ssh/config /root/.ssh/config; do
-      $SUDO mkdir -p $(dirname $conf)
-      if ! grep StrictHostKeyChecking $conf; then
-        # this should be used only in CI environment
-        echo -e "Host *\n\tStrictHostKeyChecking no\n" | $SUDO tee $conf >/dev/null
-      fi
-    done
+ci_config_ssh() {
+
+    # for CI current user
+    conf=~/.ssh/config
+    mkdir -p $(dirname $conf)
+    touch $conf
+    echo -e "Host *\n\tStrictHostKeyChecking $SSH_STRICTHOSTKEYCHECKING\n" | tee -a $conf >/dev/null
+    touch ~/.ssh/known_hosts
+
     if ! grep github.com ~/.ssh/known_hosts; then
       ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
+      ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts || true
     fi
+
+    # for root
+    #conf=/root/.ssh/config
+    #$SUDO mkdir -p $(dirname $conf)
+    #$SUDO touch $conf
+    #if ! $SSH_STRICTHOSTKEYCHECKING; then
+    #  echo -e "Host *\n\tStrictHostKeyChecking no\n" | $SUDO tee -a $conf >/dev/null
+    #fi
+}
+
+# DEPRECATED
+system_config_ssh_conf() {
+  # for backward compatibility
+  ci_config_ssh
 }
 
 system_config_salt_modules_prereq() {
@@ -244,7 +262,7 @@ system_config_master() {
     log_info "System configuration salt master"
 
     system_config_salt_modules_prereq
-    system_config_ssh_conf
+    ci_config_ssh
 
     if ! grep '127.0.1.2.*salt' /etc/hosts; then
       echo "127.0.1.2  salt" | $SUDO tee -a /etc/hosts >/dev/null
