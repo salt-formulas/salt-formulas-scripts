@@ -268,12 +268,6 @@ system_config_master() {
       echo "127.0.1.2  salt" | $SUDO tee -a /etc/hosts >/dev/null
     fi
     
-    # DEPRECATED, should be removed or moved to salt master specific function
-    which reclass-salt || {
-      test -e /usr/share/reclass/reclass-salt && {
-        ln -fs /usr/share/reclass/reclass-salt /usr/bin
-      }
-    }
 }
 
 configure_salt_master()
@@ -409,6 +403,11 @@ install_reclass()
   case ${VERSION} in
       pkg|package)
         which reclass || $SUDO $PKGTOOL install -y reclass
+        which reclass-salt || {
+          if [ -e /usr/share/reclass/reclass-salt ]; then
+	     ln -fs /usr/share/reclass/reclass-salt /usr/bin
+          fi
+        }
         ;;
       *)
         log_warn "Install development version of reclass"
@@ -443,12 +442,6 @@ install_salt_master_pkg()
         ;;
     esac
 
-    which reclass-salt || {
-      test -e /usr/share/reclass/reclass-salt && {
-        ln -fs /usr/share/reclass/reclass-salt /usr/bin
-      }
-    }
-
     configure_salt_master
 
     echo -e "\nRestarting services ...\n"
@@ -480,12 +473,6 @@ install_salt_master_pip()
 
     curl -Lo /etc/init.d/salt-master https://anonscm.debian.org/cgit/pkg-salt/salt.git/plain/debian/salt-master.init && chmod 755 /etc/init.d/salt-master
     ln -s /usr/local/bin/salt-master /usr/bin/salt-master
-
-    which reclass-salt || {
-      test -e /usr/share/reclass/reclass-salt && {
-        ln -fs /usr/share/reclass/reclass-salt /usr/bin
-      }
-    }
 
     configure_salt_master
 
