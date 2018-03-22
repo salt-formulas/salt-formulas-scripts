@@ -803,7 +803,7 @@ function verify_salt_master() {
       $SUDO salt-call --no-color pillar.data
     fi
     # TODO: REMOVE reclass --nodeinfo section / run only on debug - as the only required is reclass.validate_*
-    if ! $SUDO reclass --nodeinfo ${MASTER_HOSTNAME} > /tmp/${MASTER_HOSTNAME}.reclass.nodeinfo; then
+    if ! $SUDO python -m reclass.cli --nodeinfo ${MASTER_HOSTNAME} > /tmp/${MASTER_HOSTNAME}.reclass.nodeinfo; then
         log_err "For more details see full log /tmp/${MASTER_HOSTNAME}.reclass.nodeinfo"
         exit 1
     fi
@@ -818,7 +818,7 @@ function verify_salt_minion() {
     $SUDO salt-call ${SALT_OPTS} --id=${node} grains.item roles > /tmp/${node}.grains.item.roles
     $SUDO salt-call ${SALT_OPTS} --id=${node} state.show_lowstate > /tmp/${node}.state.show_lowstate
   fi
-  if ! $SUDO reclass --nodeinfo ${node} > /tmp/${node}.reclass.nodeinfo; then
+  if ! $SUDO python -m reclass.cli --nodeinfo ${node} > /tmp/${node}.reclass.nodeinfo; then
       log_err "For more details see full log /tmp/${node}.reclass.nodeinfo"
       if [[ ${BREAK_ON_VERIFICATION_ERROR:-yes} =~ ^(True|true|1|yes)$ ]]; then
         exit 1
