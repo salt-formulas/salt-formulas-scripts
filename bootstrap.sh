@@ -710,6 +710,83 @@ saltmaster_init() {
 
 }
 
+## CI Workarounds
+
+function mockup_node_registration() {
+
+  # for dynamic nodes registrations (require github.com/salt-formulas/salt-formula-reclass)
+
+  source /etc/os-release
+  os_codename=$VERSION_CODENAME
+  domain=$(hostname -d)
+  master_ip=$(hostname -I | awk '{print $1}')
+  fake_ip_preffix=$(echo $master_ip | awk -F. '{print $1"."$2}')
+  fake_ip_base=10
+
+  # SHOULD BE ALREADY RUN AS A PART OF BOOTSTRAP
+  # sync, in order to load custom modules
+  #salt-call saltutil.sync_all
+
+  # SHOULD BE ALREADY RUN AS A PART OF BOOTSTRAP
+  #PILLAR='{"reclass":{"storage":{"data_source":{"engine":"local"}}} }'
+  #salt-call state.apply reclass.storage.node  pillar="$PILLAR" > /dev/null 2>/dev/null || true
+
+  # rotate over dynamic hosts
+  for host_idx in {01..02};do
+    for host in `salt-call pillar.items reclass:storage |grep '<<node_hostname>>' | awk -F_ '{print $NF}' | sed 's/[0-9]*//g' | egrep -v cfg | sort -u`; do
+      hostname=${host}${host_idx}
+      fake_ip_base=$(($fake_ip_base + 1))
+
+      node_network01_ip="$fake_ip_preffix.11.$fake_ip_base"
+      node_network02_ip="$fake_ip_preffix.12.$fake_ip_base"
+      node_network03_ip="$fake_ip_preffix.13.$fake_ip_base"
+      node_network04_ip="$fake_ip_preffix.14.$fake_ip_base"
+      node_network05_ip="$fake_ip_preffix.15.$fake_ip_base"
+      node_network01_iface=$(ls /sys/class/net/ | grep -v lo | sort | head -n1)
+      node_network02_iface="eth1"
+      node_network03_iface="eth2"
+      node_network04_iface="eth3"
+      node_network05_iface="eth4"
+
+      declare -A vars
+      vars=(
+          ["node_master_ip"]=
+          ["node_os"]=${os_codename}
+          ["node_deploy_ip"]=${node_network01_ip}
+          ["node_deploy_iface"]=${node_network01_iface}
+          ["node_control_ip"]=${node_network02_ip}
+          ["node_control_iface"]=${node_network02_iface}
+          ["node_tenant_ip"]=${node_network03_ip}
+          ["node_tenant_iface"]=${node_network03_iface}
+          ["node_external_ip"]=${node_network04_ip}
+          ["node_external_iface"]=${node_network04_iface}
+          ["node_baremetal_ip"]=${node_network05_ip}
+          ["node_baremetal_iface"]=${node_network05_iface}
+          ["node_domain"]=$domain
+          ["node_cluster"]=$(hostname -d |awk -F. '{print $1}')
+          ["node_hostname"]=$hostname
+      )
+
+      data=""; i=0
+      for key in "${!vars[@]}"; do
+          data+="\"${key}\": \"${vars[${key}]}\""
+          i=$(($i+1))
+          if [ $i -lt ${#vars[@]} ]; then
+              data+=", "
+          fi
+      done
+      echo "Classifying node $hostname"
+      NODECR='"node_name": "'${hostname}.${domain}'", "node_data": {'$data'}'
+      PILLAR='{'${NODECR}', "reclass":{"storage":{"data_source":{"engine":"local"}}} }'
+      salt-call state.apply reclass.reactor_sls.node_register pillar="$PILLAR" #-l info
+      #salt-call event.send "reclass/minion/classify" "{$data}"
+    done
+  done
+
+}
+
+## VERIFY
+
 
 function verify_salt_master() {
     set -e
