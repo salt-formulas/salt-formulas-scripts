@@ -160,9 +160,9 @@ function fetchGitFormula() {
 
             # NOTE: github.com/salt-formulas specific steps
             # link formula service pillars
-            if [ ! -n "$RECLASS_BASE" -a -e "$FORMULAS_BASE/$repo/metadata/service" ]; then
-              test -e $RECLASS_BASE/service || mkdir -p $RECLASS_BASE/service
-              ln -svf $FORMULAS_BASE/$repo/metadata/service $RECLASS_BASE/service/$name
+            if [ -n "$RECLASS_BASE" -a -e "$FORMULAS_BASE/$repo/metadata/service" ]; then
+              test -e $RECLASS_BASE/classes/service || mkdir -p $RECLASS_BASE/classes/service
+              ln -svf $FORMULAS_BASE/$repo/metadata/service $RECLASS_BASE/classes/service/$name
             fi
             # install dependencies
             FETCHED+=($name)
