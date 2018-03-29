@@ -114,58 +114,60 @@ function fetchGitFormula() {
               fi
           fi
 
+          # A metadata.yml is github.com/salt-formulas specific
+          if [ ! -n "$2" -a -e  "$FORMULAS_BASE/$repo/metadata.yml" ]; then
+            # try to update name as in formula metadata
+            name=$(getFormulaName "$FORMULAS_BASE/$repo/metadata.yml")
+          fi
+
+          # Recognize the repo is formula
+          if [ ! -e $FORMULAS_BASE/$repo/$name ]; then
+            echo -e "[E] The repository $FORMULAS_BASE/$repo was not recognized as formula repository."
+            rm -rvf "$FORMULAS_BASE/$repo"
+            return ${FAIL_ON_ERRORS:-0}
+          fi
+
           # Avoid checkout formulas/repos without CI
           if ! $FORMULA_WITHOUT_CI; then
             CI=false
-            for p in .circleci .travis.yml .kitchen.yml invoke.yml tasks.py test tests; do
+            for p in .circleci .travis.yml .kitchen.yml invoke.yml tasks.py tox.ini test tests; do
               if [ -e  "$FORMULAS_BASE/$repo/$p" ]; then
                 CI=true; break;
               fi
             done
             if ! $CI; then
               mv "$FORMULAS_BASE/$repo" "$FORMULAS_BASE/${repo}.deprecated-no-ci";
-              return;
+              return ${FAIL_ON_ERRORS:-0}
             fi
-          fi
-
-          # metadata.yml is github.com/salt-formulas specific
-          if [ ! -n "$2" -a -e  "$FORMULAS_BASE/$repo/metadata.yml" ]; then
-            # try to update name as in formula metadata
-            name=$(getFormulaName "$FORMULAS_BASE/$repo/metadata.yml")
           fi
 
           # SET FORMULA IN SALT ENV
           if [ ! -e  "$SALT_ENV_PATH/$name" ]; then
-            if [ -e $FORMULAS_BASE/$repo/$name ]; then
 
-              # link formula
-              ln -svf $FORMULAS_BASE/$repo/$name $SALT_ENV_PATH/$name
+            # link formula
+            ln -svf $FORMULAS_BASE/$repo/$name $SALT_ENV_PATH/$name
 
-              # copy custom _states, _modules, _etc ...
-              for c in $(/bin/ls $FORMULAS_BASE/$repo | grep '^_' | xargs -n1 --no-run-if-empty); do
-                test -e $SALT_ENV_PATH/$c || mkdir -p $SALT_ENV_PATH/$c
-                ln -svf $FORMULAS_BASE/$repo/$c/* $SALT_ENV_PATH/$c
-              done
+            # copy custom _states, _modules, _etc ...
+            for c in $(/bin/ls $FORMULAS_BASE/$repo | grep '^_' | xargs -n1 --no-run-if-empty); do
+              test -e $SALT_ENV_PATH/$c || mkdir -p $SALT_ENV_PATH/$c
+              ln -svf $FORMULAS_BASE/$repo/$c/* $SALT_ENV_PATH/$c
+            done
 
-              # install optional dependencies (python/pip related as of now only)
-              if [ -e  $FORMULAS_BASE/$repo/requirements.txt ]; then
-                pip install -r $FORMULAS_BASE/$repo/requirements.txt
-              fi
+            # install optional dependencies (python/pip related as of now only)
+            if [ -e  $FORMULAS_BASE/$repo/requirements.txt ]; then
+              pip install -r $FORMULAS_BASE/$repo/requirements.txt
+            fi
 
-              # NOTE: github.com/salt-formulas specific steps
-              # link formula service pillars
-              if [ ! -n "$RECLASS_BASE" -a -e "$FORMULAS_BASE/$repo/metadata/service" ]; then
-                test -e $RECLASS_BASE/service || mkdir -p $RECLASS_BASE/service
-                ln -svf $FORMULAS_BASE/$repo/metadata/service $RECLASS_BASE/service/$name
-              fi
-              # install dependencies
-              FETCHED+=($name)
-              if [ -e  "$FORMULAS_BASE/$repo/metadata.yml" ]; then
-                fetchDependencies "$FORMULAS_BASE/$repo/metadata.yml"
-              fi
-            else
-              echo -e "[E] The repository $FORMULAS_BASE/$repo was not recognized as formula repository."
-              return ${FAIL_ON_ERRORS:-0}
+            # NOTE: github.com/salt-formulas specific steps
+            # link formula service pillars
+            if [ ! -n "$RECLASS_BASE" -a -e "$FORMULAS_BASE/$repo/metadata/service" ]; then
+              test -e $RECLASS_BASE/service || mkdir -p $RECLASS_BASE/service
+              ln -svf $FORMULAS_BASE/$repo/metadata/service $RECLASS_BASE/service/$name
+            fi
+            # install dependencies
+            FETCHED+=($name)
+            if [ -e  "$FORMULAS_BASE/$repo/metadata.yml" ]; then
+              fetchDependencies "$FORMULAS_BASE/$repo/metadata.yml"
             fi
           else
             echo -e "[I] Formula "$name" already fetched."
