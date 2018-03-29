@@ -17,7 +17,7 @@
 FORMULA_SOURCES="${SALT_FORMULA_SOURCES:-https://github.com/salt-formulas https://github.com/saltstack-formulas}"
 FORMULA_VERSION="${SALT_FORMULA_VERSION:-master}"
 # where to fetch formulas
-FORMULAS_BASE=${SALT_FORMULAS_BASE:-/srv/salt/formulas}
+FORMULAS_BASE=${SALT_FORMULAS_BASE:-/srv/salt/formula}
 # For better stability, skip formula repos without recognized CI
 FORMULA_WITHOUT_CI=${SALT_FORMULA_WITHOUT_CI:-false}
 # salt env/root, where formulas are found
