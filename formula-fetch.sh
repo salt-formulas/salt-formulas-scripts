@@ -117,7 +117,7 @@ function fetchGitFormula() {
           # Avoid checkout formulas/repos without CI
           if ! $FORMULA_WITHOUT_CI; then
             CI=false
-            for p in .circleci .travis.yml .kitchen.yml invoke.yml tasks.py; do
+            for p in .circleci .travis.yml .kitchen.yml invoke.yml tasks.py test tests; do
               if [ -e  "$FORMULAS_BASE/$repo/$p" ]; then
                 CI=true; break;
               fi
