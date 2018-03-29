@@ -234,15 +234,28 @@ function listRepos_github_com() {
 }
 
 function fetchAll() {
-  for source in $(echo ${FORMULA_SOURCES} | xargs -n1 --no-run-if-empty| xargs -n1 --no-run-if-empty); do
+  # iterate over all defined sources
+  for source in $(echo ${FORMULA_SOURCES} | xargs -n1 --no-run-if-empty); do
     hosting=$(echo ${source//\./_} | awk -F'/' '{print $3}')
     orgname=$(echo ${source//\./_} | awk -F'/' '{print $4}')
-    for repo in $(listRepos_$hosting "$orgname" | xargs -n1 --no-run-if-empty| sort); do
+
+    # Get repos. To protect builds on master we likely fail on errors/none while getting repos from $source
+    set -o pipefail
+    repos="$(listRepos_$hosting "$orgname" | xargs -n1 --no-run-if-empty| sort)"
+    set +o pipefail
+    if [ ! -n "$repos" ]; then
+      echo "[E] Error caught or no repositories found at $source. Exiting.";
+      exit 1;
+    fi
+
+    # fetch all repos that looks like formula
+    for repo in $(echo ${repos} | xargs -n1 --no-run-if-empty); do
       # TODO, avoid a hardcoded pattern to filter formula repos
       if [[ $repo =~ ^(.*formula.*)$ ]]; then
         fetchGitFormula "$source/$repo";
       fi
     done;
+
   done;
 }
 
