@@ -45,7 +45,9 @@ function fetchDependencies() {
 		  for dep in yaml.load(open(sys.argv[1], "r"))["dependencies"]:
 		    if len(set(('name', 'source')) & set(dep.keys())) == 2:
 		      print("{source} {name}".format(**dep))
-		except:
+		except Exception as e:
+		  print("[W] {}".format(e.__doc__))
+		  print("[W] {}".format(e.message))
 		  pass
 		DEPS
 }
@@ -57,7 +59,9 @@ function getFormulaName() {
   python3 - "$1" <<-READ_NAME
 		try:
 		  import sys,yaml;print(yaml.load(open(sys.argv[1], "r"))["name"]);
-		except:
+		except Exception as e:
+		  print("[W] {}".format(e.__doc__))
+		  print("[W] {}".format(e.message))
 		  pass
 		READ_NAME
 }
@@ -220,7 +224,12 @@ function listRepos_github_com() {
 		    for repo in org.get_repos():
 		        yield repo.name
 		
-		print(*get_org_repos(make_github_agent(), str(sys.argv[1])), sep="\n")
+		try:
+		  print(*get_org_repos(make_github_agent(), str(sys.argv[1])), sep="\n")
+		except Exception as e:
+		  print("[E] {}".format(e.__doc__))
+		  print("[E] {}".format(e.message))
+		  sys.exit(1)
 		LIST_REPOS
 }
 
