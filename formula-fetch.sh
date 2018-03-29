@@ -16,14 +16,17 @@
 # default sources
 FORMULA_SOURCES="${SALT_FORMULA_SOURCES:-https://github.com/salt-formulas https://github.com/saltstack-formulas}"
 FORMULA_VERSION="${SALT_FORMULA_VERSION:-master}"
+# where to fetch formulas
+FORMULAS_BASE=${SALT_FORMULAS_BASE:-/srv/salt/formulas}
+# For better stability, skip formula repos without recognized CI
+FORMULA_WITHOUT_CI=${SALT_FORMULA_WITHOUT_CI:-false}
 # salt env/root, where formulas are found
 SALT_ENV_PATH=${SALT_ENV_PATH:-/srv/salt/env/prd}
 #SALT_ENV_PATH=${SALT_ENV_PATH:-.vendor/formulas}
 #SALT_ENV_PATH=${SALT_ENV_PATH:/usr/share/salt-formulas/env/_formulas}
-# where to fetch formulas
-FORMULAS_BASE=${SALT_FORMULAS_BASE:-/srv/salt/formulas}
 # reclass related
 RECLASS_BASE=${RECLASS_BASE:-/srv/salt/reclass}
+# env
 LC_ALL=en_US.UTF-8
 LANG=en_US.UTF-8
 
@@ -105,6 +108,20 @@ function fetchGitFormula() {
                 echo -e "[E] Fetching formula from $origin failed."
                 return ${FAIL_ON_ERRORS:-0}
               fi
+          fi
+
+          # Avoid checkout formulas/repos without CI
+          if ! $FORMULA_WITHOUT_CI; then
+            CI=false
+            for p in .circleci .travis.yml .kitchen.yml invoke.yml tasks.py; do
+              if [ -e  "$FORMULAS_BASE/$repo/$p" ]; then
+                CI=true; break;
+              fi
+            done
+            if ! $CI; then
+              mv "$FORMULAS_BASE/$repo" "$FORMULAS_BASE/${repo}.deprecated-no-ci";
+              return;
+            fi
           fi
 
           # metadata.yml is github.com/salt-formulas specific
