@@ -120,10 +120,11 @@ function fetchGitFormula() {
             name=$(getFormulaName "$FORMULAS_BASE/$repo/metadata.yml")
           fi
 
+          # FIXME, better formula recognition/name fixup for saltstack formulas
           # Recognize the repo is formula
           if [ ! -e $FORMULAS_BASE/$repo/$name ]; then
             echo -e "[E] The repository $FORMULAS_BASE/$repo was not recognized as formula repository."
-            rm -rvf "$FORMULAS_BASE/$repo"
+            rm -rf "$FORMULAS_BASE/$repo"
             return ${FAIL_ON_ERRORS:-0}
           fi
 
