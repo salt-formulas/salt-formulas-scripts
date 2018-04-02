@@ -528,6 +528,8 @@ install_salt_formula_pkg()
                     echo -e "\nInstall salt-formula-${formula_service} failed.\n"
                     exit 1
                   fi
+              #Since some salt formula names contain "-" and in symlinks they should contain "_" adding replacement
+              formula_service=${formula_service//-/$'_'}
               [ ! -L "${RECLASS_ROOT}/classes/service/${formula_service}" ] && \
                   ln -sf ${FORMULAS_PATH}/reclass/service/${formula_service} ${RECLASS_ROOT}/classes/service/${formula_service}
           done
