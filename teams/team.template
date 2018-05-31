@@ -5,13 +5,12 @@ parameters:
         ${SNAME}:
           enabled: true
           name: ${SNAME}
-          sudo: true
+          sudo: ${_param:linux_system_user_sudo}
           full_name: ${FNAME}
           home: /home/${SNAME}
           email: ${EMAIL}
   openssh:
     server:
-      enabled: true
       user:
         ${SNAME}:
           enabled: true
