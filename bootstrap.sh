@@ -249,7 +249,7 @@ system_config_ssh_conf() {
 
 system_config_salt_modules_prereq() {
     # salt-formulas custom modules dependencies, etc:
-    $SUDO $PKGTOOL install -y iproute2 curl sudo apt-transport-https python-psutil python-apt python-m2crypto python-oauth python-pip &>/dev/null
+    $SUDO $PKGTOOL install -y apt-transport-https curl git iproute2 openssh-client python-psutil python-apt python-m2crypto python-oauth python-pip sudo &>/dev/null
 }
 
 system_config_minion() {
