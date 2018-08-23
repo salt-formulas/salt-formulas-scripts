@@ -74,6 +74,8 @@ export DOMAIN=${DOMAIN:-bootstrap.local}
 # salt
 export MINION_ID=${MINION_ID:-${HOSTNAME}.${DOMAIN}}
 export MASTER_HOSTNAME=${MASTER_HOSTNAME:-${HOSTNAME}.${DOMAIN}}
+# Ignore state.apply salt.master.env error
+export SA_IGNORE_ERROR_SALT_MASTER_ENV=${SA_IGNORE_ERROR_SALT_MASTER_ENV:-False}
 
 # saltstack
 BOOTSTRAP_SALTSTACK=${BOOTSTRAP_SALTSTACK:-True}
@@ -648,6 +650,10 @@ saltmaster_init() {
     log_info "State: salt.master.env,salt.master.pillar"
     if ! $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar="$PILLAR"; then
       log_err "State \`salt.master.env,salt.master.pillar pillar=$PILLAR\` failed, keep your eyes wide open!"
+      if [[ $SA_IGNORE_ERROR_SALT_MASTER_ENV =~ ^(False|false|0|no)$ ]]; then
+        exit 1
+      fi
+
     fi
 
     # Revert temporary SaltMaster minimal configuration, if any
@@ -662,6 +668,9 @@ saltmaster_init() {
       log_info "State: salt.master.env,salt.master.pillar"
       if ! $SUDO salt-call ${SALT_OPTS} state.apply salt.master.env,salt.master.pillar pillar="$PILLAR"; then
         log_err "State \`salt.master.env,salt.master.pillar pillar=$PILLAR\` failed, keep your eyes wide open!"
+        if [[ $SA_IGNORE_ERROR_SALT_MASTER_ENV =~ ^(False|false|0|no)$ ]]; then
+          exit 1
+        fi
       fi
     fi
     popd
