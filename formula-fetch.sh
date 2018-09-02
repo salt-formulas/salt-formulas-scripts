@@ -20,6 +20,8 @@ FORMULA_VERSION="${SALT_FORMULA_VERSION:-master}"
 FORMULAS_BASE=${SALT_FORMULAS_BASE:-/srv/salt/formula}
 # For better stability, skip formula repos without recognized CI
 FORMULA_WITHOUT_CI=${SALT_FORMULA_WITHOUT_CI:-false}
+# On rare occasions, dependencies fetching should be skipped (e.g. broken metadata.yml)
+FORMULA_SKIP_DEPENDENCIES=${SALT_FORMULA_SKIP_DEPENDENCIES:-false}
 # salt env/root, where formulas are found
 SALT_ENV_PATH=${SALT_ENV_PATH:-/srv/salt/env/prd}
 #SALT_ENV_PATH=${SALT_ENV_PATH:-.vendor/formulas}
@@ -108,7 +110,7 @@ function fetchGitFormula() {
                 # Fallback to the master branch if the branch doesn't exist for this repository
                 branch=master
               fi
-              if ! git clone "$origin" "$FORMULAS_BASE/$repo" -b "$branch"; then
+              if ! git clone --no-hardlinks "$origin" "$FORMULAS_BASE/$repo" -b "$branch"; then
                 echo -e "[E] Fetching formula from $origin failed."
                 return ${FAIL_ON_ERRORS:-0}
               fi
@@ -167,7 +169,7 @@ function fetchGitFormula() {
             fi
             # install dependencies
             FETCHED+=($name)
-            if [ -e  "$FORMULAS_BASE/$repo/metadata.yml" ]; then
+            if [ -e  "$FORMULAS_BASE/$repo/metadata.yml" ] && ! $FORMULA_SKIP_DEPENDENCIES; then
               fetchDependencies "$FORMULAS_BASE/$repo/metadata.yml"
             fi
           else
@@ -208,6 +210,27 @@ function setupPyEnv() {
   }
 }
 
+function listRepos_() {
+  # local filesystem lister ('hosting' is empty for abspaths, e.g. file:///home/...)
+  ls "${2#*//}" -1
+}
+
+function listRepos_gerrit() {
+  if [ -e Pipfile.lock ]; then python=$(pipenv --py); else python=python3; fi
+  $python - "$1" "$2" <<-LIST_REPOS
+		import sys
+		import json
+		import requests
+
+		url = '{}/projects/'.format(sys.argv[2])
+		prefix = '{}/'.format(sys.argv[1])
+		params = { 'pp': 0, 'p': prefix }
+		# Drop magic prefix line (XSSI prevention) from JSON response
+		resp = requests.get(url=url, params=params).text.split('\n', 2)[1]
+		print("\n".join(list(json.loads(resp))))
+		LIST_REPOS
+}
+
 function listRepos_github_com() {
   #export python=$(pipenv --py || (setupPyEnv &>/dev/null; pipenv --py))
   if [ -e Pipfile.lock ]; then python=$(pipenv --py); else python=python3; fi
@@ -242,9 +265,12 @@ function fetchAll() {
     hosting=$(echo ${source//\./_} | awk -F'/' '{print $3}')
     orgname=$(echo ${source//\./_} | awk -F'/' '{print $4}')
 
+    # Gerrit hosted formulas require special handling to bypass 'formula' hardcoded pattern below
+    [[ "$source" =~ gerrit ]] && source=${source%/${orgname}} && hosting=gerrit
+
     # Get repos. To protect builds on master we likely fail on errors/none while getting repos from $source
     set -o pipefail
-    repos="$(listRepos_$hosting "$orgname" | xargs -n1 --no-run-if-empty| sort)"
+    repos="$(listRepos_$hosting "$orgname" "$source" | xargs -n1 --no-run-if-empty| sort)"
     set +o pipefail
     if [ ! -n "$repos" ]; then
       echo "[E] Error caught or no repositories found at $source. Exiting.";
