@@ -10,6 +10,11 @@
 #       Its not intended to be used in PRODUCTION unless you know what you are doing.
 #       You have been warned!
 
+__ScriptVersion="2018.09.12"
+__ScriptName="bootstrap.sh"
+__ScriptFullName="$0"
+__ScriptArgs="$*"
+
 # Source specific env vars.
 # shopt -u dotglob
 export RECLASS_ROOT=${RECLASS_ROOT:-/srv/salt/reclass}
@@ -60,9 +65,9 @@ export FORMULAS_BRANCH=${FORMULAS_BRANCH:-master}
 export FORMULAS_SOURCE=${FORMULAS_SOURCE:-pkg} # pkg/git
 # Essential set of formulas (known to by used on cfg01 node for most setups during bootsrap)
 # DEPRECATED: FORMULAS_SALT_MASTER=${FORMULAS_SALT_MASTER:- $EXTRA_FORMULAS maas memcached ntp nginx collectd sensu heka sphinx mysql grafana libvirt rsyslog glusterfs postfix xtrabackup freeipa prometheus telegraf elasticsearch kibana rundeck devops-portal rsync docker keepalived aptly jenkins gerrit artifactory influxdb horizon}
-FORMULAS_SALT_MASTER=${FORMULAS_SALT_MASTER:- $EXTRA_FORMULAS}
+FORMULAS_SALT_MASTER=${FORMULAS_SALT_MASTER:- "$EXTRA_FORMULAS"}
 # minimal set of formulas for salt-master bootstrap
-declare -a FORMULAS_SALT_MASTER=(reclass salt git openssh linux $(echo $FORMULAS_SALT_MASTER))
+declare -a FORMULAS_SALT_MASTER=(reclass salt git openssh linux $(echo "${FORMULAS_SALT_MASTER}"))
 export FORMULAS_SALT_MASTER
 
 # system / host
@@ -504,6 +509,20 @@ install_salt_minion_pip()
     #$SVCTOOL salt-minion restart
 }
 
+function install_salt_formula_pkg_all(){
+    log_warn "Installing and configuring ALL formulas ..."
+    if ! $SUDO apt-get install -y 'salt-formula-*'; then
+      echo -e "\nInstall ALL formulas by mask 'salt-formula-*' failed.\n"
+      exit 1
+    fi
+    for formula_service in $(ls ${FORMULAS_PATH}/reclass/service/); do
+        #Since some salt formula names contain "-" and in symlinks they should contain "_" adding replacement
+        formula_service=${formula_service//-/$'_'}
+        if [ ! -L "${RECLASS_ROOT}/classes/service/${formula_service}" ]; then
+            ln -sf ${FORMULAS_PATH}/reclass/service/${formula_service} ${RECLASS_ROOT}/classes/service/${formula_service}
+        fi
+    done
+}
 
 install_salt_formula_pkg()
 {
@@ -514,6 +533,10 @@ install_salt_formula_pkg()
           echo "Configuring necessary formulas ..."
 
           [ ! -d ${RECLASS_ROOT}/classes/service ] && mkdir -p ${RECLASS_ROOT}/classes/service
+          if [[ "${FORMULAS_SALT_MASTER}" =~ '*' ]]; then
+            install_salt_formula_pkg_all
+            return
+          fi
           # Set essentials if FORMULAS_SALT_MASTER is not defined at all
           [ -z ${FORMULAS_SALT_MASTER} ] && declare -a FORMULAS_SALT_MASTER=("linux" "reclass" "salt" "memcached")
           for formula_service in "${FORMULAS_SALT_MASTER[@]}"; do
@@ -909,6 +932,9 @@ function default() {
 
 
 ##########################################
+log_info "Running version: ${__ScriptVersion}"
+log_info "Command line: '${__ScriptFullName} ${__ScriptArgs}'"
+
 [[ "$0" != "$BASH_SOURCE" ]] || {
 # unless file is being sourced
   default $@
