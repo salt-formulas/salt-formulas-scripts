@@ -70,6 +70,10 @@ FORMULAS_SALT_MASTER=${FORMULAS_SALT_MASTER:- "$EXTRA_FORMULAS"}
 declare -a FORMULAS_SALT_MASTER=(reclass salt git openssh linux $(echo "${FORMULAS_SALT_MASTER}"))
 export FORMULAS_SALT_MASTER
 
+
+# Install 'salt-formula-*'. Works only with FORMULAS_SOURCE==pkg
+export EXTRA_FORMULAS_PKG_ALL=${EXTRA_FORMULAS_PKG_ALL:-False}
+
 # system / host
 export HOSTNAME=${HOSTNAME:-`hostname -s`}
 export HOSTNAME=${HOSTNAME//.*/}
@@ -533,7 +537,7 @@ install_salt_formula_pkg()
           echo "Configuring necessary formulas ..."
 
           [ ! -d ${RECLASS_ROOT}/classes/service ] && mkdir -p ${RECLASS_ROOT}/classes/service
-          if [[ "${FORMULAS_SALT_MASTER}" =~ '*' ]]; then
+          if [[ ${EXTRA_FORMULAS_PKG_ALL} =~ ^(True|true|1|yes)$ ]]; then
             install_salt_formula_pkg_all
             return
           fi
