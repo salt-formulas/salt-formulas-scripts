@@ -3,7 +3,7 @@
 # If we want to have yet another ppa instead of sources build, just replase it.
 # TODO(dstremkouski). Check if ppa is applicable here.
 apt update
-apt -y install python-pip autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev wget git ruby-dev curl dnsutils
+apt -y install python-pip autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev wget git ruby-dev curl dnsutils rbenv
 pip install PyYAML
 pip install virtualenv
 
